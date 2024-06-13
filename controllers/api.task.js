@@ -18,7 +18,7 @@ const mFobjReturn = (a, b, c) => {
 }
 
 exports.getById = async (req, res, next) => {
-    console.log(1);
+  
     objReturn.data = null;
 
     
@@ -82,7 +82,6 @@ exports.getByUserId = async (req, res, next) => {
     res.json(objReturn);
 }
 exports.addTask = async (req, res, next) => {
-    console.log(now);
     objReturn.data = null;
     try {
         const { UserID, Desc, Deadline, Name } = req.body;
@@ -109,7 +108,7 @@ exports.addTask = async (req, res, next) => {
 
 
     } catch (error) {
-        mFobjReturn(0, 'error.message', null);
+        mFobjReturn(0, error.message, null);
 
         return res.status(400).json(objReturn);
     }
@@ -131,6 +130,7 @@ exports.updateById = async (req, res, next) => {
 
 
         const updateFields = req.body;
+
 
         if (req.file && req.file.path) {
             updateFields.Image = req.file.path;

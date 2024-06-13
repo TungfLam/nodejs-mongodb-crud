@@ -15,6 +15,14 @@ var objReturn = {
     status: 1,
     msg: 'OK'
 }
+const isCheckMail = (mail) => {
+
+    const reg = /^(([^<>()[\]\.,;:\s@\"]+(\.[^<>()[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
+    const isCheckMail = reg.test(mail)
+
+    return isCheckMail;
+
+}
 const mFobjReturn = (a, b, c) => {
     objReturn.status = a;
     objReturn.msg = b;
@@ -61,12 +69,19 @@ exports.addUser = async (req, res, next) => {
     try {
         const { FullName, Email, PhoneNumber, Password: userPassword } = req.body;
 
+        const mIsCheckMail = isCheckMail(Email)
+        if (mIsCheckMail == false) {
+
+            mFobjReturn(0, 'meo lỗi kìa', null);
+            return res.status(401).json(objReturn);
+
+        }
+
         const RegistrationDate = now;
         const existingUser = await mdU.userModel.findOne({ Email });
         if (existingUser) {
 
             mFobjReturn(0, 'Email đã tồn tại', null);
-
             return res.status(401).json(objReturn)
 
         }
@@ -103,6 +118,14 @@ exports.updateById = async (req, res, next) => {
         const updateFields = req.body;
 
         delete updateFields.Password;
+
+        const mIsCheckMail = isCheckMail(updateFields.Email)
+        if (mIsCheckMail == false) {
+
+            mFobjReturn(0, 'meo lỗi kìa ', null);
+            return res.status(401).json(objReturn);
+
+        }
 
         // if (updateFields.password) {
         //     const hashedPassword = await bcrypt.hash(updateFields.password, 10); // 10 là số vòng lặp (cost factor)
@@ -199,5 +222,11 @@ exports.userLogin = async (req, res, next) => {
     }
     res.json(objReturn);
 }
+
+
+
+
+
+
 
 

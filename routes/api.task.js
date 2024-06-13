@@ -32,15 +32,15 @@ const api_tasks = require('../controllers/api.task');
 
 
 
-router.get('/:Id', api_tasks.getById);
-router.get('/u/:userId', api_tasks.getByUserId);
+router.post('/addTask', upload.single('Image'), api_tasks.addTask);
 
+router.get('/u/:userId', api_tasks.getByUserId);
+router.get('/:Id', api_tasks.getById);
 
 router.put('/updateTasks/:taskId',upload.single('Image'), api_tasks.updateById);
 
 router.delete('/delTasks/:taskId', api_tasks.deleteById);
 
-router.post('/addTask', upload.single('Image'), api_tasks.addTask);
 
 
 
