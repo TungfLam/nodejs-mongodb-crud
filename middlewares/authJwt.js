@@ -2,7 +2,14 @@ const jwt = require('jsonwebtoken')
 const mUser = require('../models/user.model');
 require('dotenv').config(); // su dung thu vien doc file env
 const priveteKEY = process.env.TOKEN_SEC_KEY;
-
+/**
+ * Middleware xác thực token JWT.
+ *
+ * @param {Object} req - Yêu cầu từ client.
+ * @param {Object} res - Đối tượng trả về cho client.
+ * @param {Function} next - Hàm middleware tiếp theo.
+ * @returns {Promise<void>}
+ */
 const verifyToken = async (req, res, next) => {
     let header_token = req.header('Authorization');
 

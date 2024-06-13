@@ -1,11 +1,6 @@
 var mdU = require('../models/user.model');
-const mongoose = require('mongoose');
 const moment = require('moment-timezone');
-const jwt = require('jsonwebtoken');
 
-
-
-const nodemailer = require('nodemailer');
 const timeZone = 'Asia/Ho_Chi_Minh';
 var now = moment().tz(timeZone);
 
@@ -15,6 +10,13 @@ var objReturn = {
     status: 1,
     msg: 'OK'
 }
+
+/**
+ * Kiểm tra định dạng email.
+ *
+ * @param {string} mail - Địa chỉ email cần kiểm tra.
+ * @returns {boolean} - Trả về true nếu email hợp lệ, ngược lại false.
+ */
 const isCheckMail = (mail) => {
 
     const reg = /^(([^<>()[\]\.,;:\s@\"]+(\.[^<>()[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
@@ -23,46 +25,43 @@ const isCheckMail = (mail) => {
     return isCheckMail;
 
 }
+
+/**
+ * Cập nhật đối tượng trả về.
+ *
+ * @param {number} a - Trạng thái.
+ * @param {string} b - Thông báo.
+ * @param {*} c - Dữ liệu trả về.
+ */
 const mFobjReturn = (a, b, c) => {
     objReturn.status = a;
     objReturn.msg = b;
     objReturn.data = c;
 }
 
-const transporter = nodemailer.createTransport({
-    service: 'Gmail',
-    auth: {
-        user: 't6ngl4m@gmail.com',
-        pass: 'oviy iscv zwch wyvl'
-    }
-});
-exports.sendMail = async (req, res, next) => {
 
-    const { to, subject, text } = req.body;
-    try {
-        const info = await transporter.sendMail({
-            from: 't6ngl4m@gmail.com', // email gửi đi
-            to: to, // email nhận
-            subject: subject, // chủ đề email
-            text: text // nội dung email
-        });
-
-        console.log('Email sent: ' + info.response);
-        objReturn.data = null;
-        objReturn.msg = 'Email sent: ' + info.response;
-        return res.status(200).json(objReturn)
-    } catch (error) {
-        console.error('Error sending email:', error);
-    }
-}
-
-
+/**
+ * Lấy thông tin người dùng hiện tại.
+ *
+ * @param {Object} req - Yêu cầu từ client.
+ * @param {Object} res - Đối tượng trả về cho client.
+ * @param {Function} next - Hàm middleware tiếp theo.
+ * @returns {void}
+ */
 exports.getByU = async (req, res, next) => {
 
     mFobjReturn(1, 'tìm thành công 2', req.user);
 
     res.json(objReturn);
 }
+/**
+ * Thêm người dùng mới.
+ *
+ * @param {Object} req - Yêu cầu từ client.
+ * @param {Object} res - Đối tượng trả về cho client.
+ * @param {Function} next - Hàm middleware tiếp theo.
+ * @returns {Promise<void>}
+ */
 exports.addUser = async (req, res, next) => {
     objReturn.data = null;
 
@@ -110,6 +109,15 @@ exports.addUser = async (req, res, next) => {
 
     res.json(objReturn);
 }
+
+/**
+ * Cập nhật người dùng theo ID.
+ *
+ * @param {Object} req - Yêu cầu từ client.
+ * @param {Object} res - Đối tượng trả về cho client.
+ * @param {Function} next - Hàm middleware tiếp theo.
+ * @returns {Promise<void>}
+ */
 exports.updateById = async (req, res, next) => {
     objReturn.data = null;
 
@@ -152,6 +160,15 @@ exports.updateById = async (req, res, next) => {
 
     res.json(objReturn);
 }
+
+/**
+ * Thay đổi mật khẩu người dùng.
+ *
+ * @param {Object} req - Yêu cầu từ client.
+ * @param {Object} res - Đối tượng trả về cho client.
+ * @param {Function} next - Hàm middleware tiếp theo.
+ * @returns {Promise<void>}
+ */
 exports.changePassword = async (req, res, next) => {
     objReturn.data = null;
 
@@ -188,7 +205,14 @@ exports.changePassword = async (req, res, next) => {
         return res.status(500).json(objReturn);
     }
 }
-
+/**
+ * Đăng nhập người dùng.
+ *
+ * @param {Object} req - Yêu cầu từ client.
+ * @param {Object} res - Đối tượng trả về cho client.
+ * @param {Function} next - Hàm middleware tiếp theo.
+ * @returns {Promise<void>}
+ */
 exports.userLogin = async (req, res, next) => {
     const { Email, Password } = req.body;
     objReturn.data = null;

@@ -10,18 +10,32 @@ var objReturn = {
     msg: 'OK'
 }
 
-
+/**
+ * Cập nhật đối tượng trả về.
+ *
+ * @param {number} a - Trạng thái.
+ * @param {string} b - Thông báo.
+ * @param {*} c - Dữ liệu trả về.
+ */
 const mFobjReturn = (a, b, c) => {
     objReturn.status = a;
     objReturn.msg = b;
     objReturn.data = c;
 }
 
+/**
+ * Lấy thông tin nhiệm vụ theo ID.
+ *
+ * @param {Object} req - Yêu cầu từ client.
+ * @param {Object} res - Đối tượng trả về cho client.
+ * @param {Function} next - Hàm middleware tiếp theo.
+ * @returns {Promise<void>}
+ */
 exports.getById = async (req, res, next) => {
-  
+
     objReturn.data = null;
 
-    
+
     try {
         const Id = req.params.Id;
 
@@ -31,7 +45,7 @@ exports.getById = async (req, res, next) => {
             return res.status(400).json(objReturn);
         }
 
-        const task = await mTask.taskModel.findById( Id );
+        const task = await mTask.taskModel.findById(Id);
 
         if (task <= 0) {
             mFobjReturn(0, 'Không tìm thấy nhiệm vụ', null);
@@ -50,6 +64,15 @@ exports.getById = async (req, res, next) => {
 
     res.json(objReturn);
 }
+
+/**
+ * Lấy thông tin nhiệm vụ theo User ID.
+ *
+ * @param {Object} req - Yêu cầu từ client.
+ * @param {Object} res - Đối tượng trả về cho client.
+ * @param {Function} next - Hàm middleware tiếp theo.
+ * @returns {Promise<void>}
+ */
 exports.getByUserId = async (req, res, next) => {
     objReturn.data = null;
 
@@ -81,6 +104,15 @@ exports.getByUserId = async (req, res, next) => {
 
     res.json(objReturn);
 }
+
+/**
+ * Thêm nhiệm vụ mới.
+ *
+ * @param {Object} req - Yêu cầu từ client.
+ * @param {Object} res - Đối tượng trả về cho client.
+ * @param {Function} next - Hàm middleware tiếp theo.
+ * @returns {Promise<void>}
+ */
 exports.addTask = async (req, res, next) => {
     objReturn.data = null;
     try {
@@ -106,15 +138,24 @@ exports.addTask = async (req, res, next) => {
         const saveTask = await newTask.save();
         mFobjReturn(1, 'task được thêm thành công ', saveTask);
 
-
     } catch (error) {
-        mFobjReturn(0, error.message, null);
 
+        mFobjReturn(0, error.message, null);
         return res.status(400).json(objReturn);
+
     }
 
     res.json(objReturn);
 }
+
+/**
+ * Cập nhật nhiệm vụ theo ID.
+ *
+ * @param {Object} req - Yêu cầu từ client.
+ * @param {Object} res - Đối tượng trả về cho client.
+ * @param {Function} next - Hàm middleware tiếp theo.
+ * @returns {Promise<void>}
+ */
 exports.updateById = async (req, res, next) => {
     objReturn.data = null;
 
@@ -128,9 +169,7 @@ exports.updateById = async (req, res, next) => {
             return res.status(400).json(objReturn);
         }
 
-
         const updateFields = req.body;
-
 
         if (req.file && req.file.path) {
             updateFields.Image = req.file.path;
@@ -139,17 +178,16 @@ exports.updateById = async (req, res, next) => {
         delete updateFields.CreateAt;
         delete updateFields.UserID;
 
-
-
         const updateTask = await mTask.taskModel.findByIdAndUpdate(taskId, updateFields, { new: true });
 
         if (!updateTask) {
+
             mFobjReturn(0, 'Không tìm thấy hoặc đã bị xóa', null);
 
             return res.status(400).json(objReturn);
         } else {
-            mFobjReturn(1, 'sửa thành công', updateTask);
 
+            mFobjReturn(1, 'sửa thành công', updateTask);
 
         }
     } catch (error) {
@@ -162,6 +200,14 @@ exports.updateById = async (req, res, next) => {
 
     res.json(objReturn);
 }
+/**
+ * Xóa nhiệm vụ theo ID.
+ *
+ * @param {Object} req - Yêu cầu từ client.
+ * @param {Object} res - Đối tượng trả về cho client.
+ * @param {Function} next - Hàm middleware tiếp theo.
+ * @returns {Promise<void>}
+ */
 exports.deleteById = async (req, res, next) => {
     objReturn.data = null;
 
@@ -198,66 +244,3 @@ exports.deleteById = async (req, res, next) => {
 }
 
 
-
-
-
-// exports.addTasks = async (req, res, next) => {
-//     objReturn.data = null;
-
-//     let list = [];
-
-//     try {
-//         list = await mTask.taskModel.find()
-//             .populate('ProductID')
-//             .populate('UserID', '_id FullName Email PhoneNumber');
-//         if (list.length > 0) {
-//             objReturn.msg = 'tìm thành công';
-//             objReturn.data = list;
-//         } else {
-//             objReturn.status = 0;
-//             objReturn.msg = 'Không có dữ liệu phù hợp';
-//             return res.status(500).json(objReturn);
-
-//         }
-
-//     } catch (error) {
-//         objReturn.status = 0;
-//         objReturn.msg = error.message;
-//         return res.status(500).json(objReturn);
-//     }
-
-//     res.json(objReturn);
-// }
-// exports.getById = async (req, res, next) => {
-//     objReturn.data = null;
-
-//     try {
-//         const cartId = req.params.cartId;
-
-//         if (!mongoose.Types.ObjectId.isValid(cartId)) {
-//             objReturn.status = 0;
-//             objReturn.msg = 'cartId không hợp lệ';
-//             return res.status(400).json(objReturn);
-//         }
-
-//         const cart = await mTask.taskModel.findById(cartId)
-//             .populate('ProductID')
-//             .populate('UserID', '_id FullName Email PhoneNumber');
-
-//         if (cart) {
-//             objReturn.msg = 'tìm thành công';
-//             objReturn.data = cart;
-//         } else {
-//             objReturn.status = 0;
-//             objReturn.msg = 'Không tìm giỏ hàng';
-//             return res.status(400).json(objReturn);
-//         }
-//     } catch (error) {
-//         objReturn.status = 0;
-//         objReturn.msg = error.message;
-//         return res.status(500).json(objReturn);
-
-//     }
-
-//     res.json(objReturn);
-// }
