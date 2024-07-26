@@ -22,66 +22,10 @@ const storage = new CloudinaryStorage({
 });
 
 const upload = multer({ storage: storage });
-
 const api_tasks = require('../controllers/api.task');
-
-/**
- * Định tuyến thêm nhiệm vụ mới với ảnh đính kèm.
- *
- * @name POST/api/task/addTask
- * @function
- * @memberof module:api_task
- * @inner
- * @param {string} path - Đường dẫn endpoint.
- * @param {Callback} middleware - Middleware xử lý yêu cầu.
- */
 router.post('/addTask', upload.single('Image'), api_tasks.addTask);
-/**
- * Định tuyến lấy danh sách nhiệm vụ theo userId.
- *
- * @name GET/api/task/u/:userId
- * @function
- * @memberof module:api_task
- * @inner
- * @param {string} path - Đường dẫn endpoint.
- * @param {Callback} middleware - Middleware xử lý yêu cầu.
- */
 router.get('/u/:userId', api_tasks.getByUserId);
-/**
- * Định tuyến lấy thông tin nhiệm vụ theo Id.
- *
- * @name GET/api/task/:Id
- * @function
- * @memberof module:api_task
- * @inner
- * @param {string} path - Đường dẫn endpoint.
- * @param {Callback} middleware - Middleware xử lý yêu cầu.
- */
 router.get('/:Id', api_tasks.getById);
-/**
- * Định tuyến cập nhật thông tin nhiệm vụ.
- *
- * @name PUT/api/task/updateTasks/:taskId
- * @function
- * @memberof module:api_task
- * @inner
- * @param {string} path - Đường dẫn endpoint.
- * @param {Callback} middleware - Middleware xử lý yêu cầu.
- */
 router.put('/updateTasks/:taskId',upload.single('Image'), api_tasks.updateById);
-/**
- * Định tuyến xóa nhiệm vụ.
- *
- * @name DELETE/api/task/delTasks/:taskId
- * @function
- * @memberof module:api_task
- * @inner
- * @param {string} path - Đường dẫn endpoint.
- * @param {Callback} middleware - Middleware xử lý yêu cầu.
- */
 router.delete('/delTasks/:taskId', api_tasks.deleteById);
-
-
-
-
 module.exports = router;

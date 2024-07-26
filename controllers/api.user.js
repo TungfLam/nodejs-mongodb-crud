@@ -4,19 +4,11 @@ const moment = require('moment-timezone');
 const timeZone = 'Asia/Ho_Chi_Minh';
 var now = moment().tz(timeZone);
 
-
 const bcrypt = require('bcrypt');
 var objReturn = {
     status: 1,
     msg: 'OK'
 }
-
-/**
- * Kiểm tra định dạng email.
- *
- * @param {string} mail - Địa chỉ email cần kiểm tra.
- * @returns {boolean} - Trả về true nếu email hợp lệ, ngược lại false.
- */
 const isCheckMail = (mail) => {
 
     const reg = /^(([^<>()[\]\.,;:\s@\"]+(\.[^<>()[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
@@ -25,44 +17,19 @@ const isCheckMail = (mail) => {
     return isCheckMail;
 
 }
-
-/**
- * Cập nhật đối tượng trả về.
- *
- * @param {number} a - Trạng thái.
- * @param {string} b - Thông báo.
- * @param {*} c - Dữ liệu trả về.
- */
 const mFobjReturn = (a, b, c) => {
     objReturn.status = a;
     objReturn.msg = b;
     objReturn.data = c;
 }
 
-
-/**
- * Lấy thông tin người dùng hiện tại.
- *
- * @param {Object} req - Yêu cầu từ client.
- * @param {Object} res - Đối tượng trả về cho client.
- * @param {Function} next - Hàm middleware tiếp theo.
- * @returns {void}
- */
-exports.getByU = async (req, res, next) => {
+const getByU = async (req, res, next) => {
 
     mFobjReturn(1, 'tìm thành công 2', req.user);
 
     res.json(objReturn);
 }
-/**
- * Thêm người dùng mới.
- *
- * @param {Object} req - Yêu cầu từ client.
- * @param {Object} res - Đối tượng trả về cho client.
- * @param {Function} next - Hàm middleware tiếp theo.
- * @returns {Promise<void>}
- */
-exports.addUser = async (req, res, next) => {
+const addUser = async (req, res, next) => {
     objReturn.data = null;
 
     try {
@@ -109,16 +76,7 @@ exports.addUser = async (req, res, next) => {
 
     res.json(objReturn);
 }
-
-/**
- * Cập nhật người dùng theo ID.
- *
- * @param {Object} req - Yêu cầu từ client.
- * @param {Object} res - Đối tượng trả về cho client.
- * @param {Function} next - Hàm middleware tiếp theo.
- * @returns {Promise<void>}
- */
-exports.updateById = async (req, res, next) => {
+const updateById = async (req, res, next) => {
     objReturn.data = null;
 
     try {
@@ -160,21 +118,23 @@ exports.updateById = async (req, res, next) => {
 
     res.json(objReturn);
 }
-
-/**
- * Thay đổi mật khẩu người dùng.
- *
- * @param {Object} req - Yêu cầu từ client.
- * @param {Object} res - Đối tượng trả về cho client.
- * @param {Function} next - Hàm middleware tiếp theo.
- * @returns {Promise<void>}
- */
-exports.changePassword = async (req, res, next) => {
+const changePassword = async (req, res, next) => {
     objReturn.data = null;
 
     try {
         const { oldPassword, newPassword } = req.body;
         const userId = req.params.userId;
+
+        if (!oldPassword || !newPassword) {
+            mFobjReturn(0, 'Nhập đầy đủ mật khẩu', null);
+            return res.status(400).json(objReturn);
+
+        }
+        if (oldPassword.length < 8 || newPassword.length < 8) {
+            mFobjReturn(0, 'Mật khẩu phải có ít nhất 8 ký tự', null);
+
+            return res.status(400).json(objReturn);
+        }
 
         const user = await mdU.userModel.findById(userId);
         if (!user) {
@@ -205,15 +165,7 @@ exports.changePassword = async (req, res, next) => {
         return res.status(500).json(objReturn);
     }
 }
-/**
- * Đăng nhập người dùng.
- *
- * @param {Object} req - Yêu cầu từ client.
- * @param {Object} res - Đối tượng trả về cho client.
- * @param {Function} next - Hàm middleware tiếp theo.
- * @returns {Promise<void>}
- */
-exports.userLogin = async (req, res, next) => {
+const userLogin = async (req, res, next) => {
     const { Email, Password } = req.body;
     objReturn.data = null;
 
@@ -247,10 +199,10 @@ exports.userLogin = async (req, res, next) => {
     res.json(objReturn);
 }
 
-
-
-
-
-
-
-
+module.exports = {
+    getByU,
+    addUser,
+    updateById,
+    changePassword,
+    userLogin
+}

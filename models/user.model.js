@@ -16,10 +16,6 @@ var userSchema = new db.mongoose.Schema(
     { collection: 'users' }
 );
 
-
-
-
-
 userSchema.methods.generateAuthToken = async function () {
 
     const user = this
@@ -30,7 +26,6 @@ userSchema.methods.generateAuthToken = async function () {
     await user.save()
     return token
 }
-
 
 userSchema.statics.findByCredentials = async (Email, Password) => {
 

@@ -9,29 +9,12 @@ var objReturn = {
     status: 1,
     msg: 'OK'
 }
-
-/**
- * Cập nhật đối tượng trả về.
- *
- * @param {number} a - Trạng thái.
- * @param {string} b - Thông báo.
- * @param {*} c - Dữ liệu trả về.
- */
-const mFobjReturn = (a, b, c) => {
-    objReturn.status = a;
-    objReturn.msg = b;
-    objReturn.data = c;
+const mFobjReturn = (s, m, d) => {
+    objReturn.status = s;
+    objReturn.msg = m;
+    objReturn.data = d;
 }
-
-/**
- * Lấy thông tin nhiệm vụ theo ID.
- *
- * @param {Object} req - Yêu cầu từ client.
- * @param {Object} res - Đối tượng trả về cho client.
- * @param {Function} next - Hàm middleware tiếp theo.
- * @returns {Promise<void>}
- */
-exports.getById = async (req, res, next) => {
+const getById = async (req, res, next) => {
 
     objReturn.data = null;
 
@@ -64,16 +47,7 @@ exports.getById = async (req, res, next) => {
 
     res.json(objReturn);
 }
-
-/**
- * Lấy thông tin nhiệm vụ theo User ID.
- *
- * @param {Object} req - Yêu cầu từ client.
- * @param {Object} res - Đối tượng trả về cho client.
- * @param {Function} next - Hàm middleware tiếp theo.
- * @returns {Promise<void>}
- */
-exports.getByUserId = async (req, res, next) => {
+const getByUserId = async (req, res, next) => {
     objReturn.data = null;
 
     try {
@@ -85,7 +59,7 @@ exports.getByUserId = async (req, res, next) => {
             return res.status(400).json(objReturn);
         }
 
-        const task = await mTask.taskModel.find({ UserID: userId });
+        const task = await mTask.taskModel.find({ UserID: userId }).sort({ _id: -1 });
 
         if (task <= 0) {
             mFobjReturn(0, 'Không tìm thấy nhiệm vụ', null);
@@ -104,16 +78,7 @@ exports.getByUserId = async (req, res, next) => {
 
     res.json(objReturn);
 }
-
-/**
- * Thêm nhiệm vụ mới.
- *
- * @param {Object} req - Yêu cầu từ client.
- * @param {Object} res - Đối tượng trả về cho client.
- * @param {Function} next - Hàm middleware tiếp theo.
- * @returns {Promise<void>}
- */
-exports.addTask = async (req, res, next) => {
+const addTask = async (req, res, next) => {
     objReturn.data = null;
     try {
         const { UserID, Desc, Deadline, Name } = req.body;
@@ -147,16 +112,7 @@ exports.addTask = async (req, res, next) => {
 
     res.json(objReturn);
 }
-
-/**
- * Cập nhật nhiệm vụ theo ID.
- *
- * @param {Object} req - Yêu cầu từ client.
- * @param {Object} res - Đối tượng trả về cho client.
- * @param {Function} next - Hàm middleware tiếp theo.
- * @returns {Promise<void>}
- */
-exports.updateById = async (req, res, next) => {
+const updateById = async (req, res, next) => {
     objReturn.data = null;
 
     try {
@@ -200,15 +156,7 @@ exports.updateById = async (req, res, next) => {
 
     res.json(objReturn);
 }
-/**
- * Xóa nhiệm vụ theo ID.
- *
- * @param {Object} req - Yêu cầu từ client.
- * @param {Object} res - Đối tượng trả về cho client.
- * @param {Function} next - Hàm middleware tiếp theo.
- * @returns {Promise<void>}
- */
-exports.deleteById = async (req, res, next) => {
+const deleteById = async (req, res, next) => {
     objReturn.data = null;
 
     try {
@@ -243,4 +191,10 @@ exports.deleteById = async (req, res, next) => {
     res.json(objReturn);
 }
 
-
+module.exports = {
+    getById,
+    getByUserId,
+    addTask,
+    updateById,
+    deleteById
+}
