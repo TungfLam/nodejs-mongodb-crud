@@ -1,7 +1,7 @@
 const express = require("express");
 const crypto = require("crypto");
 const morgan = require("morgan");
-const faviconMiddleware = require("./middlewares/faviconMiddleware");
+const faviconMiddleware = require("./src/middlewares/faviconMiddleware");
 const cors = require("cors");
 var session = require("express-session");
 
