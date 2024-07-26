@@ -1,4 +1,4 @@
-var mTask = require('../models/task.model');
+var mTask = require('./task.model');
 const mongoose = require('mongoose');
 const moment = require('moment');
 

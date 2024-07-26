@@ -1,11 +1,10 @@
 const express = require('express');
 const router = express.Router();
 require('dotenv').config();
-
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
-
 const multer = require('multer');
+const api_tasks = require('./task.controller');
 
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -20,12 +19,12 @@ const storage = new CloudinaryStorage({
         allowed_formats: ['jpg', 'png'],
     },
 });
-
 const upload = multer({ storage: storage });
-const api_tasks = require('../controllers/api.task');
+
 router.post('/addTask', upload.single('Image'), api_tasks.addTask);
 router.get('/u/:userId', api_tasks.getByUserId);
 router.get('/:Id', api_tasks.getById);
 router.put('/updateTasks/:taskId',upload.single('Image'), api_tasks.updateById);
 router.delete('/delTasks/:taskId', api_tasks.deleteById);
+
 module.exports = router;

@@ -1,10 +1,9 @@
 const express = require('express');
 const router = express.Router();
-var middlewaresAuthJwt = require('../middlewares/authJwt');
 
-const api_user = require('../controllers/api.user');
+const api_user = require('./user.controller');
 
-router.get('/', middlewaresAuthJwt.verifyToken, api_user.getByU);
+router.get('/', api_user.getByU);
 router.post('/register', api_user.addUser);
 router.post('/login', api_user.userLogin);
 router.put('/updateUser/:userId', api_user.updateById);

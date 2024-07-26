@@ -1,4 +1,4 @@
-var mdU = require('../models/user.model');
+var mdU = require('./user.model');
 const moment = require('moment-timezone');
 
 const timeZone = 'Asia/Ho_Chi_Minh';

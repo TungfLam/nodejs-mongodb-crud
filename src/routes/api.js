@@ -1,8 +1,8 @@
 const express = require("express");
 const router = express.Router();
 
-const apiUserRoute = require("./api.user");
-const apiTasksRoute = require("./api.task");
+const apiUserRoute = require("../modules/user/user.route");
+const apiTasksRoute = require("../modules/task/task.route");
 
 router.use("/u", apiUserRoute);
 
