@@ -1,6 +1,7 @@
-var db = require("../../config/db");
+const db = require("../../config/db");
+const { timestampPlugin, blockCreateBy } = require("./result.middleware");
 
-var resultSchema = new db.mongoose.Schema(
+const resultSchema = new db.mongoose.Schema(
   {
     user_id: {
       type: db.mongoose.Schema.Types.ObjectId,
@@ -25,6 +26,8 @@ var resultSchema = new db.mongoose.Schema(
   },
   { collection: "results", timestamps: true }
 );
+resultSchema.plugin(timestampPlugin);
+blockCreateBy(resultSchema);
 
 let resultModel = db.mongoose.model("resultModel", resultSchema);
 
