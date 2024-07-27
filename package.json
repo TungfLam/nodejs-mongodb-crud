@@ -33,6 +33,6 @@
     "nodemon": "^3.1.0"
   },
   "devDependencies": {
-    "cloudinary": "^2.3.1"
+    "cloudinary": "^1.21.0"
   }
 }
