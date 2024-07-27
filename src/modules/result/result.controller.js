@@ -6,11 +6,17 @@ const getResultsUserTasks = async (req, res) => {
     const task_id = req.params.id;
     const { limit, page, sort, filter } = req.query;
     // Kiểm tra id task tồn tại hay không
-    if (!userId) {
+    if (!task_id) {
       throw new Error("Không tìm thấy id của user!");
     }
     // Biến nhận kết quả trả về từ resultService
-    const response = await resultService.getResultsUserTasks(task_id);
+    const response = await resultService.getResultsUserTasks(
+      task_id,
+      Number(limit) || 8,
+      Number(page) || 0,
+      sort,
+      filter
+    );
     return res.status(200).json(response);
   } catch (e) {
     return res.status(400).json({

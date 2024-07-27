@@ -14,23 +14,26 @@ const getResultsUserTasks = (id, limit, page, sort, filter) => {
         throw new Error("Không nhận được id Task!");
       }
       // Lấy tổng số bản ghi trong bảng Result
-      const total_task = await Result.resultModel.countDocument({ _id: id });
+      const total_task = await Result.resultModel.countDocuments({
+        task_id: id,
+      });
       const response = {
         status: "OK",
         message: "SUCCESS",
-        data: "",
+        data: {},
         total: total_task,
         pageCurrent: page + 1,
-        totalPage: Math.ceil(total / limit),
+        totalPage: Math.ceil(total_task / limit),
       };
-      console.log(object);
       // Kiểm tra có filter được truyền vào không
       if (filter) {
+        console.log("check");
         const lable = filter[0];
         // Bỏ qua số lượng task đã được lọc và bắt đầu tìm từ user thứ page * limit
         // Tìm kiếm theo trường filter[0] với giá trị filter[1]
         const get_result_filter = await Result.resultModel.find({
-          isDelete: false,
+          task_id: id,
+          is_delete: false,
           [lable]: { $regex: filter[1] },
         });
         //   .limit(limit)
@@ -40,12 +43,15 @@ const getResultsUserTasks = (id, limit, page, sort, filter) => {
       }
       // Kiểm tra có filter được truyền vào không
       if (sort) {
+        console.log("check");
+
         const object_sort = {};
         object_sort[sort[1]] = sort[0];
         //sort sắp xếp theo trường sort[1] theo thứ tự sort[0]
         //lọc số user được tìm từ đầu(limit), bỏ qua số lượng user đã được lọc và bắt đầu tìm từ user thứ page * limit
         const get_result_sort = await Result.resultModel.find({
-          isDelete: false,
+          task_id: id,
+          is_delete: false,
         });
         //   .limit(limit)
         //   .skip(page * limit)
@@ -53,13 +59,16 @@ const getResultsUserTasks = (id, limit, page, sort, filter) => {
         response.data = get_result_sort;
         resolve(response);
       }
+      console.log("check");
+
       // Biến lấy danh sách result trong db nếu không có filter và sort
       const get_result = await Result.resultModel.find({
-        _id: id,
-        isDelete: false,
+        task_id: id,
+        is_delete: false,
       });
       // .limit(limit)
       // .skip(page * limit);
+      console.log(get_result);
       response.data = get_result;
       resolve(response);
     } catch (e) {
