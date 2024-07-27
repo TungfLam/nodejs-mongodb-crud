@@ -60,7 +60,7 @@ const addTask = async (req, res, next) => {
 
 
         if (!user_id || !name || !desc || !deadline || !create_by) {
-            return res.status(401).json({ ...objReturn, status: 0, msg: "cách trường yêu cầu nhập đủ", });
+            return res.status(401).json({ ...objReturn, status: 0, msg: "các trường yêu cầu nhập đủ", });
         }
 
         const newTask = new mTask.taskModel({
