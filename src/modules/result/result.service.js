@@ -1,5 +1,11 @@
 const Result = require("./result.model");
+const cloudinary = require("cloudinary").v2;
 
+cloudinary.config({
+  cloud_name: process.env.CLOUD_NAME,
+  api_key: process.env.API_KEY,
+  api_secret: process.env.API_SECRET,
+});
 /**
  * Lấy danh sách kết quả khi được submit của mỗi user
  * @param {string} id - Id của task cần lấy danh sách kết quả.
@@ -22,8 +28,8 @@ const getResultsUserTasks = (id, limit, page, sort, filter) => {
         message: "SUCCESS",
         data: {},
         total: total_task,
-        pageCurrent: page + 1,
-        totalPage: Math.ceil(total_task / limit),
+        page_current: page + 1,
+        total_page: Math.ceil(total_task / limit),
       };
       // Kiểm tra có filter được truyền vào không
       if (filter) {
@@ -80,16 +86,22 @@ const getResultsUserTasks = (id, limit, page, sort, filter) => {
 /**
  * Lấy danh sách kết quả khi được submit của mỗi user
  * @param {string} data - data được nhận từ req.body.
- * @param {string} task_id - Id của task cần lấy danh sách kết quả.
+ * @param {string} task_id - Id của task cần thêm mới kết quả.
  * @returns {Object} - Dữ liệu phản hồi chứa danh sách các thuộc tính.
  * @throws {Error} - Ném ra lỗi nếu gọi API thất bại.
  */
 const createResultsUserTask = async (data, task_id) => {
   try {
+    // Kiểm tra data từ req.query có tồn tại không
     if (!data) {
       throw new Error({ message: "không nhận được data" });
     }
+    // Kiểm tra có tồn tại task id không
+    if (!task_id) {
+      throw new Error({ message: "không nhận được task id" });
+    }
     const { user_id, description, score, outcome } = data;
+    // Tạo mới bản ghi từ các trường nhận được
     const result_task = await Result.resultModel.create({
       user_id,
       task_id,
@@ -100,13 +112,103 @@ const createResultsUserTask = async (data, task_id) => {
     if (!result_task) {
       throw new Error({ message: "không thêm được result mới!" });
     }
-    return result_task;
+    return { status: "OK", message: "SUCCESS", data: result_task };
   } catch (e) {
     throw e;
   }
 };
 
+/**
+ * Lấy danh sách kết quả khi được submit của mỗi user
+ * @param {string} result_id - Id của task cần sửa thông tin.
+ * @param {string} data - data được nhận từ req.body.
+ * @returns {Object} - Dữ liệu phản hồi chứa danh sách các thuộc tính.
+ * @throws {Error} - Ném ra lỗi nếu gọi API thất bại.
+ */
+const updateResultsUserTask = async (result_id, data) => {
+  try {
+    // Kiểm tra data từ req.query có tồn tại không
+    if (!data) {
+      throw new Error({ message: "không nhận được data" });
+    }
+    // Kiểm tra có tồn tại task id không
+    if (!result_id) {
+      throw new Error({ message: "không nhận được result_id id" });
+    }
+    const update_result = await Result.resultModel.findByIdAndUpdate(id, data, {
+      new: true,
+    });
+    if (!update_result) {
+      throw new Error({ message: "không sửa được result!" });
+    }
+    return { status: "OK", message: "SUCCESS", data: update_result };
+  } catch (e) {
+    throw e;
+  }
+};
+/**
+ * Lấy danh sách kết quả khi được submit của mỗi user
+ * @param {string} file - ảnh được tải lên.
+ * @returns {Object} - Dữ liệu phản hồi chứa danh sách các thuộc tính.
+ * @throws {Error} - Ném ra lỗi nếu gọi API thất bại.
+ */
+const uploadImage = (file) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      //Kiểm tra file được tải lên
+      if (!file) {
+        return resolve({
+          status: "404",
+          message: "no image file provided",
+        });
+      }
+      //tích hợp tải file lên cloudinary
+      cloudinary.uploader
+        .upload_stream({ folder: "lifetek" }, (error, result) => {
+          if (error) {
+            return resolve({
+              status: "404",
+              message: "upload file failed",
+            });
+          }
+          return resolve({
+            public_id: result.public_id,
+            url: result.secure_url,
+          });
+        })
+        .end(file.buffer);
+    } catch (e) {
+      reject(e);
+    }
+  });
+};
+/**
+ * Lấy danh sách kết quả khi được submit của mỗi user
+ * @param {string} id - Id của result cần xóa.
+ * @returns {Object} - Dữ liệu phản hồi chứa danh sách các thuộc tính.
+ * @throws {Error} - Ném ra lỗi nếu gọi API thất bại.
+ */
+const deleteResultsUserTask = async (id) => {
+  try {
+    // Kiểm tra data từ req.query có tồn tại không
+    if (!id) {
+      throw new Error({ message: "không nhận được id result" });
+    }
+    // Tìm bản ghi có id tương ứng và sửa is_delete thành true
+    await Result.resultModel.findByIdAndUpdate(
+      id,
+      { isDelete: true },
+      { new: true }
+    );
+    return { status: "200", message: "delete success!!" };
+  } catch (e) {
+    throw e;
+  }
+};
 module.exports = {
   getResultsUserTasks,
   createResultsUserTask,
+  updateResultsUserTask,
+  deleteResultsUserTask,
+  uploadImage,
 };
