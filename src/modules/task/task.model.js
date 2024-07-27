@@ -11,7 +11,7 @@ var taskSchema = new db.mongoose.Schema(
     desc: { type: String, required: true },
     image: { type: String, required: false },
     deadline: { type: Date, required: true },
-    status: { type: Number, enum: [0, 1], required: true, default: 1 },
+    status: { type: Number, enum: [0, 1], default: 1 },
     create_by: {
       type: db.mongoose.Schema.Types.ObjectId,
       ref: "userModel",
