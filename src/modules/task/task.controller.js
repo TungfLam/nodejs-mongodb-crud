@@ -7,12 +7,8 @@ require('dotenv').config();
 let now = moment().format('YYYY-MM-DD HH:mm:ss');
 var objReturn = {
     status: 1,
-    msg: 'OK'
-}
-const mFobjReturn = (s, m, d) => {
-    objReturn.status = s;
-    objReturn.msg = m;
-    objReturn.data = d;
+    msg: 'OK',
+    data: null
 }
 const getById = async (req, res, next) => {
 
@@ -23,29 +19,19 @@ const getById = async (req, res, next) => {
         const Id = req.params.Id;
 
         if (!mongoose.Types.ObjectId.isValid(Id)) {
-            mFobjReturn(0, 'Id không hợp lệ', null);
-
-            return res.status(400).json(objReturn);
+            return res.status(401).json({ ...objReturn, status: 0, msg: "Id không hợp lệ", });
         }
 
         const task = await mTask.taskModel.findById(Id);
 
         if (task <= 0) {
-            mFobjReturn(0, 'Không tìm thấy nhiệm vụ', null);
-
-            return res.status(404).json(objReturn);
+            return res.status(404).json({ ...objReturn, status: 0, msg: "Không tìm thấy nhiệm vụ", });
         } else {
-            mFobjReturn(1, 'tìm thành công', task);
-
+            return res.status(200).json({ ...objReturn, status: 1, msg: "đăng nhập thành công", data: (task) });
         }
     } catch (error) {
-        mFobjReturn(0, error.message, null);
-
-        return res.status(500).json(objReturn);
-
+        return res.status(500).json({ ...objReturn, status: 0, msg: error.message, });
     }
-
-    res.json(objReturn);
 }
 const getByUserId = async (req, res, next) => {
     objReturn.data = null;
@@ -54,30 +40,18 @@ const getByUserId = async (req, res, next) => {
         const userId = req.params.userId;
 
         if (!mongoose.Types.ObjectId.isValid(userId)) {
-            mFobjReturn(0, 'userId không hợp lệ', null);
-
-            return res.status(400).json(objReturn);
+            return res.status(401).json({ ...objReturn, status: 0, msg: "userId không hợp lệ", });
         }
 
         const task = await mTask.taskModel.find({ user_id: userId });
 
         if (task.length <= 0) {
-            mFobjReturn(0, 'Không tìm thấy nhiệm vụ', null);
-
-            return res.status(404).json(objReturn);
+            return res.status(401).json({ ...objReturn, status: 0, msg: "Không tìm thấy nhiệm vụ", });
         }
-
-        mFobjReturn(1, 'tìm thành công', task);
-
-
+        return res.status(200).json({ ...objReturn, status: 1, msg: "tìm thành công", data: (task) });
     } catch (error) {
-        mFobjReturn(0, error.message, null);
-
-        return res.status(500).json(objReturn);
-
+        return res.status(500).json({ ...objReturn, status: 0, msg: error.message, });
     }
-
-    res.json(objReturn);
 }
 const addTask = async (req, res, next) => {
     objReturn.data = null;
@@ -86,9 +60,7 @@ const addTask = async (req, res, next) => {
 
 
         if (!user_id || !name || !desc || !deadline || status === undefined || !create_by) {
-            mFobjReturn(0, 'cách trường yêu cầu nhập đủ', null);
-
-            return res.status(400).json(objReturn);
+            return res.status(401).json({ ...objReturn, status: 0, msg: "cách trường yêu cầu nhập đủ", });
         }
 
         const newTask = new mTask.taskModel({
@@ -103,16 +75,10 @@ const addTask = async (req, res, next) => {
         });
 
         const saveTask = await newTask.save();
-        mFobjReturn(1, 'task được thêm thành công ', saveTask);
-
+        return res.status(200).json({ ...objReturn, status: 1, msg: "task được thêm thành công", data: (saveTask) });
     } catch (error) {
-
-        mFobjReturn(0, error, null);
-        return res.status(400).json(objReturn);
-
+        return res.status(500).json({ ...objReturn, status: 0, msg: error, });
     }
-
-    res.json(objReturn);
 }
 const updateById = async (req, res, next) => {
     objReturn.data = null;
@@ -121,10 +87,7 @@ const updateById = async (req, res, next) => {
         const taskId = req.params.taskId;
 
         if (!mongoose.Types.ObjectId.isValid(taskId)) {
-
-            mFobjReturn(0, 'taskId không hợp lệ', null);
-
-            return res.status(400).json(objReturn);
+            return res.status(401).json({ ...objReturn, status: 0, msg: "taskId không hợp lệ", });
         }
 
         const updateFields = req.body;
@@ -141,24 +104,13 @@ const updateById = async (req, res, next) => {
         const updateTask = await mTask.taskModel.findByIdAndUpdate(taskId, updateFields, { new: true });
 
         if (!updateTask) {
-
-            mFobjReturn(0, 'Không tìm thấy hoặc đã bị xóa', null);
-
-            return res.status(400).json(objReturn);
+            return res.status(401).json({ ...objReturn, status: 0, msg: "Không tìm thấy hoặc đã bị xóa", });
         } else {
-
-            mFobjReturn(1, 'sửa thành công', updateTask);
-
+            return res.status(200).json({ ...objReturn, status: 1, msg: "sửa thành công", data: (updateTask) });
         }
     } catch (error) {
-        mFobjReturn(0, error.message, null);
-
-
-        return res.status(400).json(objReturn);
-
+        return res.status(500).json({ ...objReturn, status: 0, msg: error.message, });
     }
-
-    res.json(objReturn);
 }
 const deleteById = async (req, res, next) => {
     objReturn.data = null;
@@ -168,33 +120,20 @@ const deleteById = async (req, res, next) => {
         const delete_by = req.body.delete_by;
 
         if (!mongoose.Types.ObjectId.isValid(taskId)) {
-
-            mFobjReturn(0, 'taskId không hợp lệ', null);
-            return res.status(400).json(objReturn);
-
+            return res.status(401).json({ ...objReturn, status: 0, msg: "taskId không hợp lệ", });
         }
 
         // const delTask = await mTask.taskModel.findByIdAndDelete(taskId);
         const delTask = await mTask.taskModel.findByIdAndUpdate(taskId, { delete_by: delete_by, is_delete: true }, { new: true });
 
         if (!delTask) {
-
-            mFobjReturn(0, 'Không tìm thấy', null);
-            return res.status(400).json(objReturn);
-
+            return res.status(401).json({ ...objReturn, status: 0, msg: "Không tìm thấy", });
         } else {
-
-            mFobjReturn(1, 'xóa thành công', null);
-
+            return res.status(200).json({ ...objReturn, status: 1, msg: "xóa thành công", data: (null) });
         }
     } catch (error) {
-
-        mFobjReturn(0, error.message, null);
-        return res.status(500).json(objReturn);
-
+        return res.status(500).json({ ...objReturn, status: 0, msg: error.message });
     }
-
-    res.json(objReturn);
 }
 
 module.exports = {
