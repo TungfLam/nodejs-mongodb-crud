@@ -56,10 +56,10 @@ const getByUserId = async (req, res, next) => {
 const addTask = async (req, res, next) => {
     objReturn.data = null;
     try {
-        const { user_id, name, desc, image, deadline, status, create_by, tags } = req.body;
+        const { user_id, name, desc, image, deadline, create_by, tags } = req.body;
 
 
-        if (!user_id || !name || !desc || !deadline || status === undefined || !create_by) {
+        if (!user_id || !name || !desc || !deadline || !create_by) {
             return res.status(401).json({ ...objReturn, status: 0, msg: "cách trường yêu cầu nhập đủ", });
         }
 
@@ -69,7 +69,6 @@ const addTask = async (req, res, next) => {
             desc,
             image,
             deadline,
-            status,
             create_by,
             tags,
         });
