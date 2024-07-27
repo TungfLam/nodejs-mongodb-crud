@@ -59,16 +59,17 @@ const getByUserId = async (req, res, next) => {
             return res.status(400).json(objReturn);
         }
 
-        const task = await mTask.taskModel.find({ UserID: userId }).sort({ _id: -1 });
+        const task = await mTask.taskModel.find({ user_id: userId });
 
-        if (task <= 0) {
+        if (task.length <= 0) {
             mFobjReturn(0, 'Không tìm thấy nhiệm vụ', null);
 
             return res.status(404).json(objReturn);
-        } else {
-            mFobjReturn(1, 'tìm thành công', task);
-
         }
+
+        mFobjReturn(1, 'tìm thành công', task);
+
+
     } catch (error) {
         mFobjReturn(0, error.message, null);
 
@@ -81,23 +82,24 @@ const getByUserId = async (req, res, next) => {
 const addTask = async (req, res, next) => {
     objReturn.data = null;
     try {
-        const { UserID, Desc, Deadline, Name } = req.body;
+        const { user_id, name, desc, image, deadline, status, create_by, tags } = req.body;
 
-        if (!Desc || !Deadline || !UserID || !Name) {
 
+        if (!user_id || !name || !desc || !deadline || status === undefined || !create_by) {
             mFobjReturn(0, 'cách trường yêu cầu nhập đủ', null);
 
             return res.status(400).json(objReturn);
         }
 
         const newTask = new mTask.taskModel({
-            UserID,
-            Name,
-            Desc,
-            Image: req.file.path,
-            CreateAt: now,
-            Deadline,
-            Status: 1
+            user_id,
+            name,
+            desc,
+            image,
+            deadline,
+            status,
+            create_by,
+            tags,
         });
 
         const saveTask = await newTask.save();
@@ -105,7 +107,7 @@ const addTask = async (req, res, next) => {
 
     } catch (error) {
 
-        mFobjReturn(0, error.message, null);
+        mFobjReturn(0, error, null);
         return res.status(400).json(objReturn);
 
     }
@@ -128,11 +130,13 @@ const updateById = async (req, res, next) => {
         const updateFields = req.body;
 
         if (req.file && req.file.path) {
-            updateFields.Image = req.file.path;
+            updateFields.image = req.file.path;
         }
 
-        delete updateFields.CreateAt;
-        delete updateFields.UserID;
+        delete updateFields.is_delete;
+        delete updateFields.createdAt;
+        delete updateFields.create_by;
+        delete updateFields.user_id;
 
         const updateTask = await mTask.taskModel.findByIdAndUpdate(taskId, updateFields, { new: true });
 
@@ -161,6 +165,7 @@ const deleteById = async (req, res, next) => {
 
     try {
         const taskId = req.params.taskId;
+        const delete_by = req.body.delete_by;
 
         if (!mongoose.Types.ObjectId.isValid(taskId)) {
 
@@ -169,22 +174,23 @@ const deleteById = async (req, res, next) => {
 
         }
 
-        const delCart = await mTask.taskModel.findByIdAndDelete(taskId);
+        // const delTask = await mTask.taskModel.findByIdAndDelete(taskId);
+        const delTask = await mTask.taskModel.findByIdAndUpdate(taskId, { delete_by: delete_by, is_delete: true }, { new: true });
 
-        if (!delCart) {
+        if (!delTask) {
 
             mFobjReturn(0, 'Không tìm thấy', null);
             return res.status(400).json(objReturn);
 
         } else {
 
-            mFobjReturn(1, 'xóa thành công', delCart);
+            mFobjReturn(1, 'xóa thành công', null);
 
         }
     } catch (error) {
 
         mFobjReturn(0, error.message, null);
-        return res.status(400).json(objReturn);
+        return res.status(500).json(objReturn);
 
     }
 

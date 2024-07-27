@@ -23,9 +23,35 @@ const mFobjReturn = (a, b, c) => {
     objReturn.data = c;
 }
 
-const getByU = async (req, res, next) => {
 
-    mFobjReturn(1, 'tìm thành công 2', req.user);
+const getById = async (req, res, next) => {
+    objReturn.data = null;
+
+    try {
+        const Id = req.params.Id;
+
+        if (!mongoose.Types.ObjectId.isValid(Id)) {
+            mFobjReturn(0, 'Id không hợp lệ', null);
+
+            return res.status(400).json(objReturn);
+        }
+
+        const task = await mdU.userModel.findById(Id);
+
+        if (task.length <= 0) {
+            mFobjReturn(0, 'Không tìm user', null);
+
+            return res.status(404).json(objReturn);
+        } else {
+            mFobjReturn(1, 'tìm thành công', task);
+
+        }
+    } catch (error) {
+        mFobjReturn(0, error.message, null);
+
+        return res.status(500).json(objReturn);
+
+    }
 
     res.json(objReturn);
 }
@@ -200,7 +226,7 @@ const userLogin = async (req, res, next) => {
 }
 
 module.exports = {
-    getByU,
+    getById,
     addUser,
     updateById,
     changePassword,

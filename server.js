@@ -6,7 +6,7 @@ const cors = require("cors");
 var session = require("express-session");
 
 const app = express();
-const port = 8000;
+const port = 3000;
 
 const apiRouter = require("./src/routes/api");
 

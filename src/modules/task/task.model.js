@@ -1,7 +1,7 @@
 var db = require('../../config/db');
 
 var taskSchema = new db.mongoose.Schema({
-    user_id: { type: db.mongoose.Schema.Types.ObjectId, ref: 'userModel', required: false },
+    user_id: { type: db.mongoose.Schema.Types.ObjectId, ref: 'userModel', required: true },
     name: { type: String, required: true },
     desc: { type: String, required: true },
     image: { type: String, required: false },
@@ -11,7 +11,6 @@ var taskSchema = new db.mongoose.Schema({
     update_by: { type: db.mongoose.Schema.Types.ObjectId, ref: 'userModel', required: false },
     is_delete: { type: Boolean, default: false },
     delete_by: { type: db.mongoose.Schema.Types.ObjectId, ref: 'userModel', required: false },
-    comments: [{ type: db.mongoose.Schema.Types.ObjectId, ref: 'commentModel' }],
     tags: [{ type: String }],
     results: [{ type: db.mongoose.Schema.Types.ObjectId, ref: 'resultModel' }]
 }, { collection: 'tasks', timestamps: true });
