@@ -1,0 +1,24 @@
+# Exported from Render on 2024-07-27T02:42:50Z
+services:
+- type: web
+  name: nodejs-mongodb-crud
+  runtime: node
+  repo: https://github.com/TungfLam/nodejs-mongodb-crud
+  plan: free
+  envVars:
+  - key: CLOUDINARY_API_SECRET
+    sync: false
+  - key: CLOUDINARY_API_KEY
+    sync: false
+  - key: CLOUDINARY_CLOUD_NAME
+    sync: false
+  - key: TOKEN_SEC_KEY
+    sync: false
+  - key: SUPPRESS_NO_CONFIG_WARNING
+    sync: false
+  - key: URI_DATABASE_MONGODB_ATLAS
+    sync: false
+  region: oregon
+  buildCommand: npm install
+  startCommand: npm start
+version: "1"
