@@ -21,10 +21,10 @@ const storage = new CloudinaryStorage({
 });
 const upload = multer({ storage: storage });
 
-router.post('/addTask', upload.single('Image'), api_tasks.addTask);
+router.post('/addTask', upload.single('image'), api_tasks.addTask);
 router.get('/u/:userId', api_tasks.getByUserId);
 router.get('/:Id', api_tasks.getById);
-router.put('/updateTasks/:taskId',upload.single('Image'), api_tasks.updateById);
-router.delete('/delTasks/:taskId', api_tasks.deleteById);
+router.put('/updateTasks/:taskId',upload.single('image'), api_tasks.updateById);
+router.post('/delTasks/:taskId', api_tasks.deleteById);
 
 module.exports = router;

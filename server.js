@@ -6,12 +6,12 @@ const cors = require("cors");
 var session = require("express-session");
 
 const app = express();
-const port = 8000;
+const port = 3000;
 
 const apiRouter = require("./src/routes/api");
 
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50mb' }))
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 app.set("view engine", "ejs");
 app.use(faviconMiddleware);
 app.use(morgan("dev"));
@@ -53,4 +53,3 @@ app.use(function (err, req, res, next) {
 app.listen(port, () => {
   console.log(`server runing port ${port} `);
 });
-
