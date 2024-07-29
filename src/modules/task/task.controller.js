@@ -60,7 +60,7 @@ const addTask = async (req, res, next) => {
 
 
         if (!user_id || !name || !desc || !deadline || !create_by) {
-            return res.status(401).json({ ...objReturn, status: 0, msg: "các trường yêu cầu nhập đủ", });
+            return res.status(401).json({ ...objReturn, status: 0, msg: "các trường yêu cầu nhập đủ", data: null });
         }
 
         const newTask = new mTask.taskModel({
@@ -76,7 +76,7 @@ const addTask = async (req, res, next) => {
         const saveTask = await newTask.save();
         return res.status(200).json({ ...objReturn, status: 1, msg: "task được thêm thành công", data: (saveTask) });
     } catch (error) {
-        return res.status(500).json({ ...objReturn, status: 0, msg: error, });
+        return res.status(500).json({ ...objReturn, status: 0, msg: error.message, data: null });
     }
 }
 const updateById = async (req, res, next) => {
