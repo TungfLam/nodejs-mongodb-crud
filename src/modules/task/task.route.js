@@ -23,6 +23,7 @@ const upload = multer({ storage: storage });
 
 router.post('/addTask', upload.single('image'), api_tasks.addTask);
 router.get('/u/:userId', api_tasks.getByUserId);
+router.get('/search', api_tasks.getByName);
 router.get('/:Id', api_tasks.getById);
 router.put(
   '/updateTasks/:taskId',

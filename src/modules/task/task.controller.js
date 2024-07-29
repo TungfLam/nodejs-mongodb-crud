@@ -45,33 +45,55 @@ const getById = async (req, res, next) => {
   }
 };
 const getByUserId = async (req, res, next) => {
-  objReturn.data = null;
+  const objReturn = { data: null, status: 0, msg: '' };
 
   try {
     const userId = req.params.userId;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
 
     if (!mongoose.Types.ObjectId.isValid(userId)) {
       return res
-        .status(401)
-        .json({ ...objReturn, status: 0, msg: 'userId không hợp lệ' });
+        .status(400)
+        .json({ ...objReturn, msg: 'userId không hợp lệ' });
     }
 
-    const task = await mTask.taskModel
+    const totalItems = await mTask.taskModel.countDocuments({ user_id: userId });
+    const totalPages = Math.ceil(totalItems / limit);
+    const skip = (page - 1) * limit;
+
+    const tasks = await mTask.taskModel
       .find({ user_id: userId })
-      .populate('results');
+      .populate('results')
+      .skip(skip)
+      .limit(limit);
 
-    if (task.length <= 0) {
+    if (tasks.length <= 0) {
       return res
-        .status(401)
-        .json({ ...objReturn, status: 0, msg: 'Không tìm thấy nhiệm vụ' });
+        .status(404)
+        .json({ ...objReturn, msg: 'Không tìm thấy nhiệm vụ' });
     }
-    return res
-      .status(200)
-      .json({ ...objReturn, status: 1, msg: 'tìm thành công', data: task });
+
+    const paginationInfo = {
+      page,
+      limit,
+      totalItems,
+      totalPages,
+      hasNextPage: page < totalPages,
+      hasPrevPage: page > 1
+    };
+
+    return res.status(200).json({
+      ...objReturn,
+      status: 1,
+      msg: 'Tìm thành công',
+      pagination: paginationInfo,
+      data: tasks
+    });
   } catch (error) {
     return res
       .status(500)
-      .json({ ...objReturn, status: 0, msg: error.message });
+      .json({ ...objReturn, msg: error.message });
   }
 };
 const addTask = async (req, res, next) => {
@@ -239,11 +261,64 @@ const deleteById = async (req, res, next) => {
       });
   }
 };
+const getByName = async (req, res, next) => {
+  const objReturn = { data: null, status: 0, msg: '' };
 
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const searchName = req.query.name || '';
+
+    // Tạo điều kiện tìm kiếm
+    const searchCondition = {
+      name: { $regex: searchName, $options: 'i' }, // Tìm kiếm không phân biệt chữ hoa/thường
+    };
+
+    const totalItems = await mTask.taskModel.countDocuments(searchCondition);
+    const totalPages = Math.ceil(totalItems / limit);
+    const skip = (page - 1) * limit;
+
+    const tasks = await mTask.taskModel
+      .find(searchCondition)
+      .populate('results')
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 }); // Sắp xếp theo thời gian tạo mới nhất
+
+    if (tasks.length <= 0) {
+      return res
+        .status(404)
+        .json({ ...objReturn, status: 0, msg: 'Không tìm thấy nhiệm vụ', data: null });
+
+    }
+
+    const paginationInfo = {
+      page,
+      limit,
+      totalItems,
+      totalPages,
+      hasNextPage: page < totalPages,
+      hasPrevPage: page > 1
+    };
+
+    return res.status(200).json({
+      ...objReturn,
+      status: 1,
+      msg: 'Tìm thành công',
+      data: tasks,
+      pagination: paginationInfo
+    });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ ...objReturn, msg: error.message });
+  }
+};
 module.exports = {
   getById,
   getByUserId,
   addTask,
   updateById,
   deleteById,
+  getByName
 };
