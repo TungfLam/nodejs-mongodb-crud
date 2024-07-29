@@ -1,9 +1,9 @@
-const Result = require("./result.model");
-const Task = require("../task/task.model");
+const Result = require('./result.model');
+const Task = require('../task/task.model');
 
-const dotenv = require("dotenv");
+const dotenv = require('dotenv');
 dotenv.config();
-const cloudinary = require("cloudinary").v2;
+const cloudinary = require('cloudinary').v2;
 
 cloudinary.config({
   cloud_name: process.env.CLOUD_NAME,
@@ -21,15 +21,15 @@ const getResultsUserTasks = (id, limit, page, sort, filter) => {
     try {
       // Kiểm tra id user có tồn tại không
       if (!id) {
-        throw new Error("Không nhận được id Task!");
+        throw new Error('Không nhận được id Task!');
       }
       // Lấy tổng số bản ghi trong bảng Result
       const total_task = await Result.resultModel.countDocuments({
         task_id: id,
       });
       const response = {
-        status: "OK",
-        message: "SUCCESS",
+        status: 'OK',
+        message: 'SUCCESS',
         data: {},
         total: total_task,
         page_current: page + 1,
@@ -94,11 +94,11 @@ const createResultsUserTask = async (data, task_id) => {
   try {
     // Kiểm tra data từ req.query có tồn tại không
     if (!data) {
-      throw new Error({ message: "không nhận được data" });
+      throw new Error({ message: 'không nhận được data' });
     }
     // Kiểm tra có tồn tại task id không
     if (!task_id) {
-      throw new Error({ message: "không nhận được task id" });
+      throw new Error({ message: 'không nhận được task id' });
     }
     const { user_id, description, score, outcome } = data;
     // Tạo mới bản ghi từ các trường nhận được
@@ -110,16 +110,45 @@ const createResultsUserTask = async (data, task_id) => {
       outcome,
     });
     if (!result_task) {
-      throw new Error({ message: "không thêm được result mới!" });
+      throw new Error({ message: 'không thêm được result mới!' });
     }
     await Task.taskModel.findByIdAndUpdate(task_id, {
       $push: { results: result_task },
       updated_at: new Date(),
     });
-    return { status: "OK", message: "SUCCESS", data: result_task };
+    return { status: 'OK', message: 'SUCCESS', data: result_task };
   } catch (e) {
     throw e;
   }
+};
+
+/**
+ * Lấy danh sách kết quả khi được submit của mỗi user
+ * @param {string} id - Id của result cần lấy danh sách kết quả.
+ * @returns {Object} - Dữ liệu phản hồi chứa danh sách các thuộc tính.
+ * @throws {Error} - Ném ra lỗi nếu gọi API thất bại.
+ */
+const getDetailResultsUserTask = (id) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const result = await Result.resultModel.findOne({
+        _id: id,
+      });
+      if (result === null) {
+        resolve({
+          status: '404',
+          message: 'ko tìm thấy kết quả',
+        });
+      }
+      resolve({
+        status: 'OK',
+        message: 'SUCCESS',
+        data: result,
+      });
+    } catch (e) {
+      reject(e);
+    }
+  });
 };
 
 /**
@@ -133,19 +162,23 @@ const updateResultsUserTask = async (result_id, data) => {
   try {
     // Kiểm tra data từ req.query có tồn tại không
     if (!data) {
-      throw new Error({ message: "không nhận được data" });
+      throw new Error({ message: 'không nhận được data' });
     }
     // Kiểm tra có tồn tại task id không
     if (!result_id) {
-      throw new Error({ message: "không nhận được result_id id" });
+      throw new Error({ message: 'không nhận được result_id id' });
     }
-    const update_result = await Result.resultModel.findByIdAndUpdate(id, data, {
-      new: true,
-    });
+    const update_result = await Result.resultModel.findByIdAndUpdate(
+      result_id,
+      data,
+      {
+        new: true,
+      },
+    );
     if (!update_result) {
-      throw new Error({ message: "không sửa được result!" });
+      throw new Error({ message: 'không sửa được result!' });
     }
-    return { status: "OK", message: "SUCCESS", data: update_result };
+    return { status: 'OK', message: 'SUCCESS', data: update_result };
   } catch (e) {
     throw e;
   }
@@ -162,17 +195,17 @@ const uploadImage = (file) => {
       //Kiểm tra file được tải lên
       if (!file) {
         return resolve({
-          status: "404",
-          message: "no image file provided",
+          status: '404',
+          message: 'no image file provided',
         });
       }
       //tích hợp tải file lên cloudinary
       cloudinary.uploader
-        .upload_stream({ folder: "lifetek" }, (error, result) => {
+        .upload_stream({ folder: 'lifetek' }, (error, result) => {
           if (error) {
             return resolve({
-              status: "404",
-              message: "upload file failed",
+              status: '404',
+              message: 'upload file failed',
             });
           }
           return resolve({
@@ -196,15 +229,15 @@ const deleteResultsUserTask = async (id) => {
   try {
     // Kiểm tra data từ req.query có tồn tại không
     if (!id) {
-      throw new Error({ message: "không nhận được id result" });
+      throw new Error({ message: 'không nhận được id result' });
     }
     // Tìm bản ghi có id tương ứng và sửa is_delete thành true
     await Result.resultModel.findByIdAndUpdate(
       id,
-      { isDelete: true },
-      { new: true }
+      { is_delete: true },
+      { new: true },
     );
-    return { status: "200", message: "delete success!!" };
+    return { status: '200', message: 'delete success!!' };
   } catch (e) {
     throw e;
   }
@@ -215,4 +248,5 @@ module.exports = {
   updateResultsUserTask,
   deleteResultsUserTask,
   uploadImage,
+  getDetailResultsUserTask,
 };
