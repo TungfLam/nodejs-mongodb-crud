@@ -24,7 +24,7 @@ const getById = async (req, res, next) => {
 
         const task = await mTask.taskModel.findById(Id);
 
-        if (task <= 0) {
+        if (!task) {
             return res.status(404).json({ ...objReturn, status: 0, msg: "Không tìm thấy nhiệm vụ", });
         } else {
             return res.status(200).json({ ...objReturn, status: 1, msg: "đăng nhập thành công", data: (task) });
@@ -43,7 +43,7 @@ const getByUserId = async (req, res, next) => {
             return res.status(401).json({ ...objReturn, status: 0, msg: "userId không hợp lệ", });
         }
 
-        const task = await mTask.taskModel.find({ user_id: userId });
+        // const task = await mTask.taskModel.findOne({ user_id: userId });
 
         if (task.length <= 0) {
             return res.status(401).json({ ...objReturn, status: 0, msg: "Không tìm thấy nhiệm vụ", });
@@ -58,10 +58,16 @@ const addTask = async (req, res, next) => {
     try {
         const { user_id, name, desc, image, deadline, create_by, tags } = req.body;
 
+        if (!mongoose.Types.ObjectId.isValid(user_id)) {
+            return res.status(401).json({ ...objReturn, status: 0, msg: "userId không hợp lệ", });
+        }
+
 
         if (!user_id || !name || !desc || !deadline || !create_by) {
             return res.status(401).json({ ...objReturn, status: 0, msg: "các trường yêu cầu nhập đủ", data: null });
         }
+
+
 
         const newTask = new mTask.taskModel({
             user_id,
@@ -76,7 +82,8 @@ const addTask = async (req, res, next) => {
         const saveTask = await newTask.save();
         return res.status(200).json({ ...objReturn, status: 1, msg: "task được thêm thành công", data: (saveTask) });
     } catch (error) {
-        return res.status(500).json({ ...objReturn, status: 0, msg: error.message, data: null });
+        return res.status(500).json({ ...objReturn, status: 0, msg: `error.message : ${error.message}`, data: (null) });
+
     }
 }
 const updateById = async (req, res, next) => {
@@ -87,6 +94,12 @@ const updateById = async (req, res, next) => {
 
         if (!mongoose.Types.ObjectId.isValid(taskId)) {
             return res.status(401).json({ ...objReturn, status: 0, msg: "taskId không hợp lệ", });
+        }
+
+        const findTask = await mTask.taskModel.findById(taskId);
+
+        if (!findTask) {
+            return res.status(404).json({ ...objReturn, status: 0, msg: "taskId not found", });
         }
 
         const updateFields = req.body;
@@ -118,11 +131,14 @@ const deleteById = async (req, res, next) => {
         const taskId = req.params.taskId;
         const delete_by = req.body.delete_by;
 
-        if (!mongoose.Types.ObjectId.isValid(taskId)) {
-            return res.status(401).json({ ...objReturn, status: 0, msg: "taskId không hợp lệ", });
+        if (!mongoose.Types.ObjectId.isValid(taskId) || !mongoose.Types.ObjectId.isValid(delete_by)) {
+            return res.status(401).json({ ...objReturn, status: 0, msg: "taskId hoặc delete_by không hợp lệ", });
+        }
+        const findTask = await mTask.taskModel.findById(taskId);
+        if (!findTask) {
+            return res.status(404).json({ ...objReturn, status: 0, msg: "taskId not found", });
         }
 
-        // const delTask = await mTask.taskModel.findByIdAndDelete(taskId);
         const delTask = await mTask.taskModel.findByIdAndUpdate(taskId, { delete_by: delete_by, is_delete: true }, { new: true });
 
         if (!delTask) {
@@ -131,7 +147,7 @@ const deleteById = async (req, res, next) => {
             return res.status(200).json({ ...objReturn, status: 1, msg: "xóa thành công", data: (null) });
         }
     } catch (error) {
-        return res.status(500).json({ ...objReturn, status: 0, msg: error.message });
+        return res.status(500).json({ ...objReturn, status: 0, msg: `error.message : ${error.message}`, data: (null) });
     }
 }
 
