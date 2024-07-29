@@ -5,9 +5,10 @@ const getResultsUserTasks = async (req, res) => {
   try {
     const task_id = req.params.id;
     const { limit, page, sort, filter } = req.query;
+    const file = req.file;
     // Kiểm tra id task tồn tại hay không
     if (!task_id) {
-      throw new Error("Không tìm thấy id của user!");
+      throw new Error("Không tìm thấy id của task!");
     }
     // Biến nhận kết quả trả về từ resultService
     const response = await resultService.getResultsUserTasks(
@@ -26,10 +27,13 @@ const getResultsUserTasks = async (req, res) => {
 };
 
 // Hàm tạo mới 1 bản ghi khi submit result
-const createResultsUserTask = (req, res) => {
+const createResultsUserTask = async (req, res) => {
   try {
     const task_id = req.params.id;
-    const { user_id, description, score, outcome } = req.body;
+    const { user_id, description, score, outcome } = Object.assign(
+      {},
+      req.body
+    );
     const outcome_exam = [
       "failure",
       "partial success",
@@ -52,20 +56,30 @@ const createResultsUserTask = (req, res) => {
         break;
     }
     // Kiểm tra trường điểm có phải dạng number không
-    if (typeof score !== "number") {
+    if (typeof Number(score) !== "number") {
       return res.status(400).json({
         status: "ERR",
         message: "score phải là số",
       });
     }
+    console.log(Object.assign({}, req.body));
     // Kiểm tra outcome có thuộc phần tử trong mẫu cho trước không
     if (!outcome_exam.includes(outcome)) {
       return res.status(400).json({
         status: "ERR",
-        message: "outcome phải là không thỏa mãn",
+        message: "outcome phải là 1 trong những dữ liệu có sẵn",
       });
     }
-    const response = resultService.createResultsUserTask(req.body, task_id);
+    if (file) {
+      const upload = await resultService.uploadImage(file);
+      if (upload) {
+        data.result_image = upload.url;
+      }
+    }
+    const response = await resultService.createResultsUserTask(
+      req.body,
+      task_id
+    );
     return res.status(200).json(response);
   } catch (e) {
     return res.status(400).json({
@@ -94,8 +108,12 @@ const updateResultsUserTask = async (req, res) => {
       default:
         break;
     }
-    const upload = await resultService.uploadImage(file);
-    data.result_image = upload.url;
+    if (file) {
+      const upload = await resultService.uploadImage(file);
+      if (upload) {
+        data.result_image = upload.url;
+      }
+    }
     const response = await resultService.updateResultsUserTask(result_id, data);
     return res.status(200).json(response);
   } catch (e) {

@@ -1,10 +1,9 @@
-var mTask = require('./task.model');
-const mongoose = require('mongoose');
-const moment = require('moment');
+var mTask = require("./task.model");
+const mongoose = require("mongoose");
+const moment = require("moment");
+require("dotenv").config();
 
-require('dotenv').config();
-
-let now = moment().format('YYYY-MM-DD HH:mm:ss');
+let now = moment().format("YYYY-MM-DD HH:mm:ss");
 var objReturn = {
   status: 1,
   msg: 'OK',

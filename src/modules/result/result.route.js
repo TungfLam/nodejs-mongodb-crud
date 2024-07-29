@@ -4,6 +4,8 @@ const resultController = require("./result.controller");
 const multer = require("multer");
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
+const dotenv = require("dotenv");
+dotenv.config();
 
 router.get("/:id", resultController.getResultsUserTasks);
 router.post("/:id", resultController.createResultsUserTask);
