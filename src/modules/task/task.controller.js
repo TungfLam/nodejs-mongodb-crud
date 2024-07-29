@@ -47,7 +47,7 @@ const getByUserId = async (req, res, next) => {
   try {
     const userId = req.params.userId;
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
+    const limit = parseInt(req.query.limit) || 12;
 
     if (!mongoose.Types.ObjectId.isValid(userId)) {
       return res.status(400).json({ ...objReturn, msg: 'userId không hợp lệ' });
@@ -247,7 +247,7 @@ const getByName = async (req, res, next) => {
 
   try {
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
+    const limit = parseInt(req.query.limit) || 12;
     const searchName = req.query.name || '';
 
     // Tạo điều kiện tìm kiếm
