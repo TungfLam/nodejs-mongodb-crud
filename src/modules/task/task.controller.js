@@ -43,7 +43,8 @@ const getByUserId = async (req, res, next) => {
             return res.status(401).json({ ...objReturn, status: 0, msg: "userId không hợp lệ", });
         }
 
-        const task = await mTask.taskModel.find({ user_id: userId });
+        const task = await mTask.taskModel.find({ user_id: userId })
+            .populate('results')
 
         if (task.length <= 0) {
             return res.status(401).json({ ...objReturn, status: 0, msg: "Không tìm thấy nhiệm vụ", });

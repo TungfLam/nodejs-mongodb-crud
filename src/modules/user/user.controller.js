@@ -1,5 +1,6 @@
 var mdU = require('./user.model');
 const moment = require('moment-timezone');
+const mongoose = require('mongoose');
 
 const timeZone = 'Asia/Ho_Chi_Minh';
 var now = moment().tz(timeZone);
@@ -38,7 +39,7 @@ const getById = async (req, res, next) => {
 
         const task = await mdU.userModel.findById(Id);
 
-        if (task.length <= 0) {
+        if (!task) {
             mFobjReturn(0, 'Không tìm user', null);
 
             return res.status(404).json(objReturn);
@@ -59,9 +60,9 @@ const addUser = async (req, res, next) => {
     objReturn.data = null;
 
     try {
-        const { FullName, Email, PhoneNumber, Password: userPassword } = req.body;
+        const { full_name, email, phone_number, password: userPassword } = req.body;
 
-        const mIsCheckMail = isCheckMail(Email)
+        const mIsCheckMail = isCheckMail(email)
         if (mIsCheckMail == false) {
 
             mFobjReturn(0, 'meo lỗi kìa', null);
@@ -69,25 +70,23 @@ const addUser = async (req, res, next) => {
 
         }
 
-        const RegistrationDate = now;
-        const existingUser = await mdU.userModel.findOne({ Email });
+        const existingUser = await mdU.userModel.findOne({ email });
         if (existingUser) {
 
-            mFobjReturn(0, 'Email đã tồn tại', null);
+            mFobjReturn(0, 'email đã tồn tại', null);
             return res.status(401).json(objReturn)
 
         }
         const hashedPassword = await bcrypt.hash(userPassword, 10);
 
-        const newUser = await mdU.userModel.create({
-            FullName,
-            Password: hashedPassword,
-            PhoneNumber,
-            Email,
-            RegistrationDate
+        const newUser = mdU.userModel({
+            full_name,
+            password: hashedPassword,
+            phone_number,
+            email,
         });
 
-        // const savedUser = await newUser.save();
+        await newUser.save();
 
         const { Password: pwd, ...userWithoutPassword } = newUser.toObject();
 
@@ -109,21 +108,16 @@ const updateById = async (req, res, next) => {
         const userId = req.params.userId;
         const updateFields = req.body;
 
-        delete updateFields.Password;
+        delete updateFields.password;
+        delete updateFields.registration_date;
 
-        const mIsCheckMail = isCheckMail(updateFields.Email)
+        const mIsCheckMail = isCheckMail(updateFields.email)
         if (mIsCheckMail == false) {
 
             mFobjReturn(0, 'meo lỗi kìa ', null);
             return res.status(401).json(objReturn);
 
         }
-
-        // if (updateFields.password) {
-        //     const hashedPassword = await bcrypt.hash(updateFields.password, 10); // 10 là số vòng lặp (cost factor)
-        //     updateFields.password = hashedPassword;
-        // }
-
 
         const updatedUser = await mdU.userModel.findByIdAndUpdate(userId, updateFields, { new: true });
 
@@ -156,8 +150,8 @@ const changePassword = async (req, res, next) => {
             return res.status(400).json(objReturn);
 
         }
-        if (oldPassword.length < 8 || newPassword.length < 8) {
-            mFobjReturn(0, 'Mật khẩu phải có ít nhất 8 ký tự', null);
+        if (newPassword.length < 8) {
+            mFobjReturn(0, 'Mật khẩu mới phải có ít nhất 8 ký tự', null);
 
             return res.status(400).json(objReturn);
         }
@@ -170,7 +164,7 @@ const changePassword = async (req, res, next) => {
             return res.status(404).json(objReturn);
         }
 
-        const isPasswordMatch = await bcrypt.compare(oldPassword, user.Password);
+        const isPasswordMatch = await bcrypt.compare(oldPassword, user.password);
         if (!isPasswordMatch) {
             mFobjReturn(0, 'Mật khẩu cũ không chính xác', null);
 
@@ -179,7 +173,7 @@ const changePassword = async (req, res, next) => {
 
         const hashedNewPassword = await bcrypt.hash(newPassword, 10);
 
-        user.Password = hashedNewPassword;
+        user.password = hashedNewPassword;
         await user.save();
 
         mFobjReturn(1, 'Mật khẩu đã được thay đổi thành công', null);
@@ -192,29 +186,24 @@ const changePassword = async (req, res, next) => {
     }
 }
 const userLogin = async (req, res, next) => {
-    const { Email, Password } = req.body;
+    const { email, password } = req.body;
     objReturn.data = null;
 
     try {
-        const user = await mdU.userModel.findByCredentials(Email, Password);
+        const user = await mdU.userModel.findOne({ email });
 
         if (!user) {
             return res.status(401).json({ message: 'Tên người dùng hoặc mật khẩu không chính xác 1' })
         }
-        // const isPasswordmatch = await bcrypt.compare(Password, user.Password);
-        // if (!isPasswordmatch) {
-        //     return res.status(401).json({ message: 'Tên người dùng hoặc mật khẩu không chính xác' })
+        const isPasswordmatch = await bcrypt.compare(password, user.password);
+        if (!isPasswordmatch) {
+            return res.status(401).json({ message: 'Tên người dùng hoặc mật khẩu không chính xác' })
 
-        // }
+        }
 
-
-        const token = await user.generateAuthToken()  // bỏ dòng này để có token
-
-        // objReturn.data = ({ user });
-        // objReturn.data = ({ user, token });// bỏ dòng này để có token
+        objReturn.data = ({ user });
 
         mFobjReturn(1, 'đăng nhập thành công ', (user));
-
 
     } catch (error) {
         mFobjReturn(0, error.message, null);

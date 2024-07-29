@@ -7,7 +7,7 @@ var userSchema = new db.mongoose.Schema(
         email: { type: String, required: true, unique: true },
         phone_number: { type: String, required: true },
         password: { type: String, required: true },
-        registration_date: { type: Date, required: true }
+        registration_date: { type: Date, default: Date.now() }
     },
     { collection: 'users' }
 );
