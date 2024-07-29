@@ -1,4 +1,8 @@
 const Result = require("./result.model");
+const Task = require("../task/task.model");
+
+const dotenv = require("dotenv");
+dotenv.config();
 const cloudinary = require("cloudinary").v2;
 
 cloudinary.config({
@@ -33,40 +37,37 @@ const getResultsUserTasks = (id, limit, page, sort, filter) => {
       };
       // Kiểm tra có filter được truyền vào không
       if (filter) {
-        console.log("check");
         const lable = filter[0];
         // Bỏ qua số lượng task đã được lọc và bắt đầu tìm từ user thứ page * limit
         // Tìm kiếm theo trường filter[0] với giá trị filter[1]
-        const get_result_filter = await Result.resultModel.find({
-          task_id: id,
-          is_delete: false,
-          [lable]: { $regex: filter[1] },
-        });
-        //   .limit(limit)
-        //   .skip(page * limit);
+        const get_result_filter = await Result.resultModel
+          .find({
+            task_id: id,
+            is_delete: false,
+            [lable]: { $regex: filter[1] },
+          })
+          .limit(limit)
+          .skip(page * limit);
         response.data = get_result_filter;
         resolve(response);
       }
-      // Kiểm tra có filter được truyền vào không
+      // Kiểm tra có sort được truyền vào không
       if (sort) {
-        console.log("check");
-
         const object_sort = {};
-        object_sort[sort[1]] = sort[0];
-        //sort sắp xếp theo trường sort[1] theo thứ tự sort[0]
+        object_sort[sort[1]] = Number(sort[0]);
+        //sort sắp xếp theo trường sort[1] theo thứ tự sort[0](1,-1)
         //lọc số user được tìm từ đầu(limit), bỏ qua số lượng user đã được lọc và bắt đầu tìm từ user thứ page * limit
-        const get_result_sort = await Result.resultModel.find({
-          task_id: id,
-          is_delete: false,
-        });
-        //   .limit(limit)
-        //   .skip(page * limit)
-        //   .sort(object_sort);
+        const get_result_sort = await Result.resultModel
+          .find({
+            task_id: id,
+            is_delete: false,
+          })
+          .limit(limit)
+          .skip(page * limit)
+          .sort(object_sort);
         response.data = get_result_sort;
         resolve(response);
       }
-      console.log("check");
-
       // Biến lấy danh sách result trong db nếu không có filter và sort
       const get_result = await Result.resultModel.find({
         task_id: id,
@@ -74,7 +75,6 @@ const getResultsUserTasks = (id, limit, page, sort, filter) => {
       });
       // .limit(limit)
       // .skip(page * limit);
-      console.log(get_result);
       response.data = get_result;
       resolve(response);
     } catch (e) {
@@ -112,6 +112,10 @@ const createResultsUserTask = async (data, task_id) => {
     if (!result_task) {
       throw new Error({ message: "không thêm được result mới!" });
     }
+    await Task.taskModel.findByIdAndUpdate(task_id, {
+      $push: { results: result_task },
+      updated_at: new Date(),
+    });
     return { status: "OK", message: "SUCCESS", data: result_task };
   } catch (e) {
     throw e;
