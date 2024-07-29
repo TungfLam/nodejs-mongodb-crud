@@ -63,7 +63,7 @@ const getByUserId = async (req, res, next) => {
     const skip = (page - 1) * limit;
 
     const tasks = await mTask.taskModel
-      .find({ user_id: userId })
+      .find({ user_id: userId, is_delete: false })
       .populate('results')
       .skip(skip)
       .limit(limit);
