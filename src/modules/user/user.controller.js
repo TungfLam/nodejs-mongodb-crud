@@ -1,15 +1,17 @@
 var mdU = require('./user.model');
-const moment = require('moment-timezone');
 const mongoose = require('mongoose');
-
-const timeZone = 'Asia/Ho_Chi_Minh';
-var now = moment().tz(timeZone);
-
 const bcrypt = require('bcrypt');
-var objReturn = {
+
+var objectReturn = {
     status: 1,
-    msg: 'OK'
+    msg: 'OK',
+    data: null
 }
+/**
+ * Function to check if the email is valid
+ * @param {string} mail - The email to be checked
+ * @returns {boolean} - Returns true if the email is valid, false otherwise
+ */
 const isCheckMail = (mail) => {
 
     const reg = /^(([^<>()[\]\.,;:\s@\"]+(\.[^<>()[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
@@ -18,46 +20,28 @@ const isCheckMail = (mail) => {
     return isCheckMail;
 
 }
-const mFobjReturn = (a, b, c) => {
-    objReturn.status = a;
-    objReturn.msg = b;
-    objReturn.data = c;
-}
-
-
 const getById = async (req, res, next) => {
-    objReturn.data = null;
-
     try {
-        const Id = req.params.Id;
+        const id = req.params.id;
 
-        if (!mongoose.Types.ObjectId.isValid(Id)) {
-            mFobjReturn(0, 'Id không hợp lệ', null);
-
-            return res.status(400).json(objReturn);
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(401).json({ ...objectReturn, status: 0, msg: "id user không hợp lệ", data: null });
         }
 
-        const task = await mdU.userModel.findById(Id);
+        const task = await mdU.userModel.findById(id);
 
         if (!task) {
-            mFobjReturn(0, 'Không tìm user', null);
-
-            return res.status(404).json(objReturn);
+            return res.status(404).json({ ...objectReturn, status: 0, msg: "Không tìm user", data: null });
         } else {
-            mFobjReturn(1, 'tìm thành công', task);
+            return res.status(200).json({ ...objectReturn, status: 1, msg: "tìm thành công", data: (task) });
 
         }
     } catch (error) {
-        mFobjReturn(0, error.message, null);
-
-        return res.status(500).json(objReturn);
+        return res.status(500).json({ ...objectReturn, status: 0, msg: error.message, data: null });
 
     }
-
-    res.json(objReturn);
 }
 const addUser = async (req, res, next) => {
-    objReturn.data = null;
 
     try {
         const { full_name, email, phone_number, password: userPassword } = req.body;
@@ -65,16 +49,14 @@ const addUser = async (req, res, next) => {
         const mIsCheckMail = isCheckMail(email)
         if (mIsCheckMail == false) {
 
-            mFobjReturn(0, 'meo lỗi kìa', null);
-            return res.status(401).json(objReturn);
+            return res.status(401).json({ ...objectReturn, status: 0, msg: "email lỗi", data: null });
 
         }
 
         const existingUser = await mdU.userModel.findOne({ email });
         if (existingUser) {
 
-            mFobjReturn(0, 'email đã tồn tại', null);
-            return res.status(401).json(objReturn)
+            return res.status(401).json({ ...objectReturn, status: 0, msg: "email đã tồn tại", data: null });
 
         }
         const hashedPassword = await bcrypt.hash(userPassword, 10);
@@ -92,17 +74,15 @@ const addUser = async (req, res, next) => {
 
 
 
-        mFobjReturn(1, 'người dùng được tạo thành công', userWithoutPassword);
+        return res.status(200).json({ ...objectReturn, status: 1, msg: "người dùng được tạo thành công", data: (userWithoutPassword) });
 
     } catch (error) {
-        objReturn.status = 0;
-        objReturn.msg = error.message;
-    }
+        return res.status(500).json({ ...objectReturn, status: 0, msg: error.message, data: null });
 
-    res.json(objReturn);
+    }
 }
 const updateById = async (req, res, next) => {
-    objReturn.data = null;
+    objectReturn.data = null;
 
     try {
         const userId = req.params.userId;
@@ -114,104 +94,84 @@ const updateById = async (req, res, next) => {
         const mIsCheckMail = isCheckMail(updateFields.email)
         if (mIsCheckMail == false) {
 
-            mFobjReturn(0, 'meo lỗi kìa ', null);
-            return res.status(401).json(objReturn);
+            return res.status(401).json({ ...objectReturn, status: 0, msg: "email lỗi", data: null });
 
         }
 
         const updatedUser = await mdU.userModel.findByIdAndUpdate(userId, updateFields, { new: true });
 
         if (!updatedUser) {
-            mFobjReturn(0, 'Không tìm thấy người dùng', null);
+            return res.status(401).json({ ...objectReturn, status: 0, msg: "Không tìm thấy người dùng", data: null });
 
         } else {
 
-            mFobjReturn(1, 'Cập nhật thành công', updatedUser);
+            return res.status(401).json({ ...objectReturn, status: 0, msg: "Cập nhật thành công", data: null });
 
         }
     } catch (error) {
-        mFobjReturn(0, error.message, null);
-
-        return res.status(401).json(objReturn)
+        return res.status(500).json({ ...objectReturn, status: 0, msg: error.message, data: null });
 
     }
-
-    res.json(objReturn);
 }
 const changePassword = async (req, res, next) => {
-    objReturn.data = null;
+    objectReturn.data = null;
 
     try {
         const { oldPassword, newPassword } = req.body;
         const userId = req.params.userId;
 
         if (!oldPassword || !newPassword) {
-            mFobjReturn(0, 'Nhập đầy đủ mật khẩu', null);
-            return res.status(400).json(objReturn);
+            return res.status(401).json({ ...objectReturn, status: 0, msg: "Nhập đầy đủ mật khẩu", data: null });
 
         }
         if (newPassword.length < 8) {
-            mFobjReturn(0, 'Mật khẩu mới phải có ít nhất 8 ký tự', null);
-
-            return res.status(400).json(objReturn);
+            return res.status(401).json({ ...objectReturn, status: 0, msg: "Mật khẩu mới phải có ít nhất 8 ký tự", data: null });
         }
 
         const user = await mdU.userModel.findById(userId);
         if (!user) {
 
-            mFobjReturn(0, 'Người dùng không tồn tại', null);
-
-            return res.status(404).json(objReturn);
+            return res.status(401).json({ ...objectReturn, status: 0, msg: "Người dùng không tồn tại", data: null });
         }
 
         const isPasswordMatch = await bcrypt.compare(oldPassword, user.password);
         if (!isPasswordMatch) {
-            mFobjReturn(0, 'Mật khẩu cũ không chính xác', null);
-
-            return res.status(401).json(objReturn);
+            return res.status(401).json({ ...objectReturn, status: 0, msg: "Mật khẩu cũ không chính xác", data: null });
         }
 
         const hashedNewPassword = await bcrypt.hash(newPassword, 10);
 
         user.password = hashedNewPassword;
         await user.save();
-
-        mFobjReturn(1, 'Mật khẩu đã được thay đổi thành công', null);
-
-        return res.status(200).json(objReturn);
+        return res.status(200).json({ ...objectReturn, status: 1, msg: "Mật khẩu đã được thay đổi thành công", data: null });
     } catch (error) {
-        mFobjReturn(0, 'Đã xảy ra lỗi khi thay đổi mật khẩu', null);
-
-        return res.status(500).json(objReturn);
+        return res.status(500).json({ ...objectReturn, status: 0, msg: `Đã xảy ra lỗi khi thay đổi mật khẩu ${error.message}F`, data: null });
     }
 }
 const userLogin = async (req, res, next) => {
     const { email, password } = req.body;
-    objReturn.data = null;
+    objectReturn.data = null;
 
     try {
         const user = await mdU.userModel.findOne({ email });
 
         if (!user) {
-            return res.status(401).json({ message: 'Tên người dùng hoặc mật khẩu không chính xác 1' })
+            return res.status(401).json({ ...objectReturn, status: 0, msg: "Tên người dùng hoặc mật khẩu không chính xác", data: null });
+
         }
         const isPasswordmatch = await bcrypt.compare(password, user.password);
         if (!isPasswordmatch) {
-            return res.status(401).json({ message: 'Tên người dùng hoặc mật khẩu không chính xác' })
+            return res.status(401).json({ ...objectReturn, status: 0, msg: "Tên người dùng hoặc mật khẩu không chính xác", data: null });
 
         }
+        objectReturn.data = ({ user });
 
-        objReturn.data = ({ user });
-
-        mFobjReturn(1, 'đăng nhập thành công ', (user));
+        return res.status(200).json({ ...objectReturn, status: 1, msg: "đăng nhập thành công", data: (user) });
 
     } catch (error) {
-        mFobjReturn(0, error.message, null);
-
-        return res.status(500).json(objReturn)
+        return res.status(500).json({ ...objectReturn, status: 0, msg: error.message, data: null });
 
     }
-    res.json(objReturn);
 }
 
 module.exports = {
