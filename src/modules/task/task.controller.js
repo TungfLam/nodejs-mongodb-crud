@@ -252,6 +252,7 @@ const getByName = async (req, res, next) => {
 
     // Tạo điều kiện tìm kiếm
     const searchCondition = {
+      is_delete: false, // Tìm kiếm không phân biệt chữ hoa/thường
       name: { $regex: searchName, $options: 'i' }, // Tìm kiếm không phân biệt chữ hoa/thường
     };
 
