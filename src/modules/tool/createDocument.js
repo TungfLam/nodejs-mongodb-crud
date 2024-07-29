@@ -1,6 +1,6 @@
-const mongoose = require("mongoose");
-const { resultModel } = require("../result/result.model"); // Điều chỉnh đường dẫn tùy theo cấu trúc dự án
-const { taskModel } = require("../task/task.modell"); // Điều chỉnh đường dẫn tùy theo cấu trúc dự án
+const mongoose = require('mongoose');
+const { resultModel } = require('../result/result.model'); // Điều chỉnh đường dẫn tùy theo cấu trúc dự án
+const { taskModel } = require('../task/task.modell'); // Điều chỉnh đường dẫn tùy theo cấu trúc dự án
 
 // Hàm tạo bản ghi mẫu cho `resultModel`
 async function createResultRecords(count) {
@@ -11,7 +11,7 @@ async function createResultRecords(count) {
       task_id: new mongoose.Types.ObjectId(), // Thay thế bằng ObjectId của task thật nếu cần
       description: `Description for result ${i}`,
       score: Math.floor(Math.random() * 101), // Random score từ 0 đến 100
-      outcome: ["failure", "partial success", "pending review", "success"][
+      outcome: ['failure', 'partial success', 'pending review', 'success'][
         Math.floor(Math.random() * 4)
       ],
       is_delete: false,
