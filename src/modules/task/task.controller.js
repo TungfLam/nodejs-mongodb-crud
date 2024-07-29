@@ -29,14 +29,12 @@ const getById = async (req, res, next) => {
         .status(404)
         .json({ ...objReturn, status: 0, msg: 'Không tìm thấy nhiệm vụ' });
     } else {
-      return res
-        .status(200)
-        .json({
-          ...objReturn,
-          status: 1,
-          msg: 'đăng nhập thành công',
-          data: task,
-        });
+      return res.status(200).json({
+        ...objReturn,
+        status: 1,
+        msg: 'đăng nhập thành công',
+        data: task,
+      });
     }
   } catch (error) {
     return res
@@ -53,12 +51,12 @@ const getByUserId = async (req, res, next) => {
     const limit = parseInt(req.query.limit) || 10;
 
     if (!mongoose.Types.ObjectId.isValid(userId)) {
-      return res
-        .status(400)
-        .json({ ...objReturn, msg: 'userId không hợp lệ' });
+      return res.status(400).json({ ...objReturn, msg: 'userId không hợp lệ' });
     }
 
-    const totalItems = await mTask.taskModel.countDocuments({ user_id: userId });
+    const totalItems = await mTask.taskModel.countDocuments({
+      user_id: userId,
+    });
     const totalPages = Math.ceil(totalItems / limit);
     const skip = (page - 1) * limit;
 
@@ -80,7 +78,7 @@ const getByUserId = async (req, res, next) => {
       totalItems,
       totalPages,
       hasNextPage: page < totalPages,
-      hasPrevPage: page > 1
+      hasPrevPage: page > 1,
     };
 
     return res.status(200).json({
@@ -88,12 +86,10 @@ const getByUserId = async (req, res, next) => {
       status: 1,
       msg: 'Tìm thành công',
       pagination: paginationInfo,
-      data: tasks
+      data: tasks,
     });
   } catch (error) {
-    return res
-      .status(500)
-      .json({ ...objReturn, msg: error.message });
+    return res.status(500).json({ ...objReturn, msg: error.message });
   }
 };
 const addTask = async (req, res, next) => {
@@ -108,14 +104,12 @@ const addTask = async (req, res, next) => {
     }
 
     if (!user_id || !name || !desc || !deadline || !create_by) {
-      return res
-        .status(401)
-        .json({
-          ...objReturn,
-          status: 0,
-          msg: 'các trường yêu cầu nhập đủ',
-          data: null,
-        });
+      return res.status(401).json({
+        ...objReturn,
+        status: 0,
+        msg: 'các trường yêu cầu nhập đủ',
+        data: null,
+      });
     }
 
     const newTask = new mTask.taskModel({
@@ -129,23 +123,19 @@ const addTask = async (req, res, next) => {
     });
 
     const saveTask = await newTask.save();
-    return res
-      .status(200)
-      .json({
-        ...objReturn,
-        status: 1,
-        msg: 'task được thêm thành công',
-        data: saveTask,
-      });
+    return res.status(200).json({
+      ...objReturn,
+      status: 1,
+      msg: 'task được thêm thành công',
+      data: saveTask,
+    });
   } catch (error) {
-    return res
-      .status(500)
-      .json({
-        ...objReturn,
-        status: 0,
-        msg: `error.message : ${error.message}`,
-        data: null,
-      });
+    return res.status(500).json({
+      ...objReturn,
+      status: 0,
+      msg: `error.message : ${error.message}`,
+      data: null,
+    });
   }
 };
 const updateById = async (req, res, next) => {
@@ -186,22 +176,18 @@ const updateById = async (req, res, next) => {
     );
 
     if (!updateTask) {
-      return res
-        .status(401)
-        .json({
-          ...objReturn,
-          status: 0,
-          msg: 'Không tìm thấy hoặc đã bị xóa',
-        });
+      return res.status(401).json({
+        ...objReturn,
+        status: 0,
+        msg: 'Không tìm thấy hoặc đã bị xóa',
+      });
     } else {
-      return res
-        .status(200)
-        .json({
-          ...objReturn,
-          status: 1,
-          msg: 'sửa thành công',
-          data: updateTask,
-        });
+      return res.status(200).json({
+        ...objReturn,
+        status: 1,
+        msg: 'sửa thành công',
+        data: updateTask,
+      });
     }
   } catch (error) {
     return res
@@ -220,13 +206,11 @@ const deleteById = async (req, res, next) => {
       !mongoose.Types.ObjectId.isValid(taskId) ||
       !mongoose.Types.ObjectId.isValid(delete_by)
     ) {
-      return res
-        .status(401)
-        .json({
-          ...objReturn,
-          status: 0,
-          msg: 'taskId hoặc delete_by không hợp lệ',
-        });
+      return res.status(401).json({
+        ...objReturn,
+        status: 0,
+        msg: 'taskId hoặc delete_by không hợp lệ',
+      });
     }
     const findTask = await mTask.taskModel.findById(taskId);
     if (!findTask) {
@@ -251,14 +235,12 @@ const deleteById = async (req, res, next) => {
         .json({ ...objReturn, status: 1, msg: 'xóa thành công', data: null });
     }
   } catch (error) {
-    return res
-      .status(500)
-      .json({
-        ...objReturn,
-        status: 0,
-        msg: `error.message : ${error.message}`,
-        data: null,
-      });
+    return res.status(500).json({
+      ...objReturn,
+      status: 0,
+      msg: `error.message : ${error.message}`,
+      data: null,
+    });
   }
 };
 const getByName = async (req, res, next) => {
@@ -288,8 +270,12 @@ const getByName = async (req, res, next) => {
     if (tasks.length <= 0) {
       return res
         .status(404)
-        .json({ ...objReturn, status: 0, msg: 'Không tìm thấy nhiệm vụ', data: null });
-
+        .json({
+          ...objReturn,
+          status: 0,
+          msg: 'Không tìm thấy nhiệm vụ',
+          data: null,
+        });
     }
 
     const paginationInfo = {
@@ -298,7 +284,7 @@ const getByName = async (req, res, next) => {
       totalItems,
       totalPages,
       hasNextPage: page < totalPages,
-      hasPrevPage: page > 1
+      hasPrevPage: page > 1,
     };
 
     return res.status(200).json({
@@ -306,12 +292,10 @@ const getByName = async (req, res, next) => {
       status: 1,
       msg: 'Tìm thành công',
       data: tasks,
-      pagination: paginationInfo
+      pagination: paginationInfo,
     });
   } catch (error) {
-    return res
-      .status(500)
-      .json({ ...objReturn, msg: error.message });
+    return res.status(500).json({ ...objReturn, msg: error.message });
   }
 };
 module.exports = {
@@ -320,5 +304,5 @@ module.exports = {
   addTask,
   updateById,
   deleteById,
-  getByName
+  getByName,
 };
