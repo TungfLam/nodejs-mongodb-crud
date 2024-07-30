@@ -24,9 +24,12 @@ const getTaskById = async (req, res, next) => {
 
     // Kiểm tra tính hợp lệ của ID
     if (!taskService.isValidObjectId(Id)) {
-      return res
-        .status(400)
-        .json({ ...objectReturn, status: 0, msg: 'Id không hợp lệ' });
+      return res.status(400).json({
+        ...objectReturn,
+        status: 0,
+        msg: 'Id không hợp lệ',
+        data: null,
+      });
     }
 
     // Tìm nhiệm vụ theo ID
@@ -34,9 +37,12 @@ const getTaskById = async (req, res, next) => {
 
     // Kiểm tra xem nhiệm vụ có tồn tại không
     if (!task) {
-      return res
-        .status(404)
-        .json({ ...objectReturn, status: 0, msg: 'Không tìm thấy nhiệm vụ' });
+      return res.status(404).json({
+        ...objectReturn,
+        status: 0,
+        msg: 'Không tìm thấy nhiệm vụ',
+        data: null,
+      });
     }
 
     // Trả về thông tin nhiệm vụ nếu tìm thấy
@@ -66,9 +72,11 @@ const getTasksByUserId = async (req, res, next) => {
 
     // Kiểm tra tính hợp lệ của ID người dùng
     if (!taskService.isValidObjectId(userId)) {
-      return res
-        .status(400)
-        .json({ ...objectReturn, msg: 'userId không hợp lệ' });
+      return res.status(400).json({
+        ...objectReturn,
+        msg: 'userId không hợp lệ',
+        data: null,
+      });
     }
 
     // Tính tổng số nhiệm vụ và số trang cần thiết cho phân trang
@@ -81,9 +89,11 @@ const getTasksByUserId = async (req, res, next) => {
 
     // Kiểm tra xem có nhiệm vụ nào không
     if (tasks.length <= 0) {
-      return res
-        .status(404)
-        .json({ ...objectReturn, msg: 'Không tìm thấy nhiệm vụ' });
+      return res.status(404).json({
+        ...objectReturn,
+        msg: 'Không tìm thấy nhiệm vụ',
+        data: null,
+      });
     }
 
     // Thông tin phân trang
@@ -115,16 +125,17 @@ const getTasksByUserId = async (req, res, next) => {
  * @return {Promise<void>} Trả về phản hồi HTTP với thông tin nhiệm vụ mới nếu thành công, hoặc thông báo lỗi nếu không thành công hoặc có lỗi xảy ra.
  */
 const createTask = async (req, res, next) => {
-  objectReturn.data = null;
-
   try {
     const { user_id, name, desc, image, deadline, create_by, tags } = req.body;
 
     // Kiểm tra tính hợp lệ của ID người dùng
     if (!taskService.isValidObjectId(user_id)) {
-      return res
-        .status(401)
-        .json({ ...objectReturn, status: 0, msg: 'userId không hợp lệ' });
+      return res.status(401).json({
+        ...objectReturn,
+        status: 0,
+        msg: 'userId không hợp lệ',
+        data: null,
+      });
     }
 
     // Kiểm tra xem tất cả các trường yêu cầu có được cung cấp đầy đủ không
@@ -138,7 +149,15 @@ const createTask = async (req, res, next) => {
     }
 
     // Tạo đối tượng nhiệm vụ mới với thông tin đã cung cấp
-    const taskData = { user_id, name, desc, image, deadline, create_by, tags };
+    const taskData = {
+      user_id,
+      name,
+      desc,
+      image,
+      deadline,
+      create_by,
+      tags,
+    };
     const saveTask = await taskService.addNewTask(taskData);
 
     // Trả về thông tin nhiệm vụ mới nếu tạo thành công
@@ -164,16 +183,17 @@ const createTask = async (req, res, next) => {
  * @return {Promise<void>} Trả về phản hồi HTTP với thông tin nhiệm vụ sau khi cập nhật thành công, hoặc thông báo lỗi nếu không thành công hoặc có lỗi xảy ra.
  */
 const updateTaskById = async (req, res, next) => {
-  objectReturn.data = null;
-
   try {
     const taskId = req.params.taskId;
 
     // Kiểm tra tính hợp lệ của ID nhiệm vụ
     if (!taskService.isValidObjectId(taskId)) {
-      return res
-        .status(401)
-        .json({ ...objectReturn, status: 0, msg: 'taskId không hợp lệ' });
+      return res.status(401).json({
+        ...objectReturn,
+        status: 0,
+        msg: 'taskId không hợp lệ',
+        data: null,
+      });
     }
 
     // Tìm nhiệm vụ theo ID
@@ -181,9 +201,12 @@ const updateTaskById = async (req, res, next) => {
 
     // Kiểm tra xem nhiệm vụ có tồn tại không
     if (!findTask) {
-      return res
-        .status(404)
-        .json({ ...objectReturn, status: 0, msg: 'Không tìm thấy taskId' });
+      return res.status(404).json({
+        ...objectReturn,
+        status: 0,
+        msg: 'Không tìm thấy taskId',
+        data: null,
+      });
     }
 
     // Lấy các trường cần cập nhật từ thân yêu cầu
@@ -209,6 +232,7 @@ const updateTaskById = async (req, res, next) => {
         ...objectReturn,
         status: 0,
         msg: 'Không tìm thấy hoặc đã bị xóa',
+        data: null,
       });
     } else {
       return res.status(200).json({
@@ -244,6 +268,7 @@ const deleteTaskById = async (req, res, next) => {
         ...objectReturn,
         status: 0,
         msg: 'taskId hoặc delete_by không hợp lệ',
+        data: null,
       });
     }
 
@@ -264,6 +289,7 @@ const deleteTaskById = async (req, res, next) => {
         ...objectReturn,
         status: 0,
         msg: 'Không tìm thấy nhiệm vụ',
+        data: null,
       });
     } else {
       return res.status(200).json({

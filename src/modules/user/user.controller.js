@@ -65,11 +65,34 @@ const createUser = async (req, res, next) => {
     // Lấy thông tin người dùng từ yêu cầu
     const { full_name, email, phone_number, password: userPassword } = req.body;
 
+    // Kiểm tra tính hợp lệ của các trường yêu cầu
+    if (!full_name || !email || !phone_number || !userPassword) {
+      return res.status(401).json({
+        ...objectReturn,
+        status: 0,
+        msg: 'Vui lòng cung cấp đầy đủ thông tin: full_name, email, phone_number, password',
+        data: null,
+      });
+    }
+
     // Kiểm tra tính hợp lệ của email
     if (!isCheckMail(email)) {
-      return res
-        .status(401)
-        .json({ ...objectReturn, status: 0, msg: 'Email lỗi', data: null });
+      return res.status(401).json({
+        ...objectReturn,
+        status: 0,
+        msg: 'Email không hợp lệ',
+        data: null,
+      });
+    }
+
+    // Kiểm tra tính hợp lệ của số điện thoại (ví dụ: không rỗng và có độ dài hợp lý)
+    if (phone_number.length < 10) {
+      return res.status(401).json({
+        ...objectReturn,
+        status: 0,
+        msg: 'Số điện thoại không hợp lệ',
+        data: null,
+      });
     }
 
     // Kiểm tra xem email đã tồn tại trong cơ sở dữ liệu chưa
@@ -84,6 +107,14 @@ const createUser = async (req, res, next) => {
     }
 
     // Mã hóa mật khẩu
+    if (userPassword.length < 8) {
+      return res.status(401).json({
+        ...objectReturn,
+        status: 0,
+        msg: 'Mật khẩu phải có ít nhất 8 ký tự',
+        data: null,
+      });
+    }
     const hashedPassword = await userService.hashPassword(userPassword);
 
     // Tạo người dùng mới với thông tin đã cung cấp
@@ -123,22 +154,39 @@ const createUser = async (req, res, next) => {
  * @return {Promise<void>} Trả về phản hồi HTTP với thông tin người dùng đã cập nhật hoặc thông báo lỗi.
  */
 const updateUserById = async (req, res, next) => {
-  objectReturn.data = null;
-
   try {
     const userId = req.params.userId;
     const updateFields = req.body;
+
+    // Kiểm tra tính hợp lệ của userId
+    if (!userService.isValidObjectId(userId)) {
+      return res.status(401).json({
+        ...objectReturn,
+        status: 0,
+        msg: 'userId không hợp lệ',
+        data: null,
+      });
+    }
 
     // Loại bỏ các trường không cần thiết khỏi thông tin cập nhật
     delete updateFields.password;
     delete updateFields.registration_date;
 
-    // Kiểm tra tính hợp lệ của email
-    if (!isCheckMail(updateFields.email)) {
+    // Kiểm tra các trường có trong thông tin cập nhật
+    if (updateFields.email && !isCheckMail(updateFields.email)) {
       return res.status(401).json({
         ...objectReturn,
         status: 0,
-        msg: 'Email lỗi',
+        msg: 'Email không hợp lệ',
+        data: null,
+      });
+    }
+
+    if (updateFields.phone_number && updateFields.phone_number.length < 10) {
+      return res.status(401).json({
+        ...objectReturn,
+        status: 0,
+        msg: 'Số điện thoại không hợp lệ',
         data: null,
       });
     }
@@ -147,7 +195,7 @@ const updateUserById = async (req, res, next) => {
     const updatedUser = await userService.updateUserById(userId, updateFields);
 
     if (!updatedUser) {
-      return res.status(401).json({
+      return res.status(404).json({
         ...objectReturn,
         status: 0,
         msg: 'Không tìm thấy người dùng',
@@ -180,8 +228,6 @@ const updateUserById = async (req, res, next) => {
  * @return {Promise<void>} Trả về phản hồi HTTP với thông báo thành công hoặc lỗi.
  */
 const updatePassword = async (req, res, next) => {
-  objectReturn.data = null;
-
   try {
     const { oldPassword, newPassword } = req.body;
     const userId = req.params.userId;
@@ -259,10 +305,18 @@ const updatePassword = async (req, res, next) => {
  * @return {Promise<void>} Trả về phản hồi HTTP với thông tin người dùng đã đăng nhập hoặc thông báo lỗi.
  */
 const loginUser = async (req, res, next) => {
-  const { email, password } = req.body;
-  objectReturn.data = null;
-
   try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(401).json({
+        ...objectReturn,
+        status: 0,
+        msg: 'Yêu cầu nhập đủ email và password',
+        data: null,
+      });
+    }
+
     // Tìm kiếm người dùng theo email
     const user = await userService.findUserByEmail(email);
 
@@ -302,9 +356,12 @@ const loginUser = async (req, res, next) => {
     });
   } catch (error) {
     // Xử lý lỗi và trả về thông báo lỗi
-    return res
-      .status(500)
-      .json({ ...objectReturn, status: 0, msg: error.message, data: null });
+    return res.status(500).json({
+      ...objectReturn,
+      status: 0,
+      msg: error.message,
+      data: null,
+    });
   }
 };
 

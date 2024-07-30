@@ -28,7 +28,10 @@ var taskSchema = new database.mongoose.Schema(
     }, // Người xóa nhiệm vụ (không bắt buộc).
     tags: [{ type: String }], // Các thẻ gán cho nhiệm vụ.
     results: [
-      { type: database.mongoose.Schema.Types.ObjectId, ref: 'resultModel' },
+      {
+        type: database.mongoose.Schema.Types.ObjectId,
+        ref: 'resultModel',
+      },
     ], // Kết quả liên quan đến nhiệm vụ.
   },
   { collection: 'tasks', timestamps: true }, // Lưu trữ trong collection 'tasks' và thêm timestamp tự động.
