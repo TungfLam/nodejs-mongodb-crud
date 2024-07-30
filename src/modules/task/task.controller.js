@@ -56,7 +56,7 @@ const getTaskById = async (req, res, next) => {
     // Xử lý lỗi và trả về thông báo lỗi
     return res
       .status(500)
-      .json({ ...objectReturn, status: 0, msg: error.message });
+      .json({ ...objectReturn, status: 0, msg: error.message, data: null });
   }
 };
 
@@ -116,7 +116,9 @@ const getTasksByUserId = async (req, res, next) => {
     });
   } catch (error) {
     // Xử lý lỗi và trả về thông báo lỗi
-    return res.status(500).json({ ...objectReturn, msg: error.message });
+    return res
+      .status(500)
+      .json({ ...objectReturn, msg: error.message, data: null });
   }
 };
 
@@ -246,7 +248,7 @@ const updateTaskById = async (req, res, next) => {
     // Xử lý lỗi và trả về thông báo lỗi
     return res
       .status(500)
-      .json({ ...objectReturn, status: 0, msg: error.message });
+      .json({ ...objectReturn, status: 0, msg: error.message, data: null });
   }
 };
 
@@ -358,7 +360,9 @@ const searchTasksByName = async (req, res, next) => {
       pagination: paginationInfo,
     });
   } catch (error) {
-    return res.status(500).json({ ...objectReturn, msg: error.message });
+    return res
+      .status(500)
+      .json({ ...objectReturn, msg: error.message, data: null });
   }
 };
 
