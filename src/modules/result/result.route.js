@@ -1,9 +1,20 @@
 const express = require('express');
 const router = express.Router();
 const resultController = require('./result.controller');
+const path = require('path');
 const multer = require('multer');
-const storage = multer.memoryStorage();
-const upload = multer({ storage });
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, './uploads'); // Thư mục lưu trữ tệp
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    const extension = path.extname(file.originalname);
+    const basename = path.basename(file.originalname, extension);
+    cb(null, `${basename}-${uniqueSuffix}${extension}`); // Tạo tên tệp duy nhất
+  },
+});
+const upload = multer({ storage: storage });
 const dotenv = require('dotenv');
 dotenv.config();
 

@@ -5,11 +5,13 @@ const dotenv = require('dotenv');
 dotenv.config();
 const cloudinary = require('cloudinary').v2;
 
+// Cấu hình cloudinary
 cloudinary.config({
-  cloud_name: process.env.CLOUD_NAME,
-  api_key: process.env.API_KEY,
-  api_secret: process.env.API_SECRET,
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
+
 /**
  * Lấy danh sách kết quả khi được submit của mỗi user
  * @param {string} id - Id của task cần lấy danh sách kết quả.
@@ -100,7 +102,7 @@ const createResultsUserTask = async (data, task_id) => {
     if (!task_id) {
       throw new Error({ message: 'không nhận được task id' });
     }
-    const { user_id, description, score, outcome } = data;
+    const { user_id, description, score, outcome, ...body } = data;
     // Tạo mới bản ghi từ các trường nhận được
     const result_task = await Result.resultModel.create({
       user_id,
@@ -108,6 +110,7 @@ const createResultsUserTask = async (data, task_id) => {
       description,
       score,
       outcome,
+      ...body,
     });
     if (!result_task) {
       throw new Error({ message: 'không thêm được result mới!' });
@@ -201,19 +204,16 @@ const uploadImage = (file) => {
       }
       //tích hợp tải file lên cloudinary
       cloudinary.uploader
-        .upload_stream({ folder: 'lifetek' }, (error, result) => {
+        .upload_stream({ folder: 'uploads' }, (error, result) => {
           if (error) {
-            return resolve({
-              status: '404',
-              message: 'upload file failed',
-            });
+            return reject(error);
           }
           return resolve({
             public_id: result.public_id,
             url: result.secure_url,
           });
         })
-        .end(file.buffer);
+        .end(buffer);
     } catch (e) {
       reject(e);
     }
@@ -242,6 +242,7 @@ const deleteResultsUserTask = async (id) => {
     throw e;
   }
 };
+
 module.exports = {
   getResultsUserTasks,
   createResultsUserTask,
