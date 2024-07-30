@@ -1,6 +1,6 @@
-const mongoose = require("mongoose");
-const { resultModel } = require("../result/result.model"); // Điều chỉnh đường dẫn tùy theo cấu trúc dự án
-const { taskModel } = require("../task/task.model"); // Điều chỉnh đường dẫn tùy theo cấu trúc dự án
+const mongoose = require('mongoose');
+const { resultModel } = require('../result/result.model'); // Điều chỉnh đường dẫn tùy theo cấu trúc dự án
+const { taskModel } = require('../task/task.model'); // Điều chỉnh đường dẫn tùy theo cấu trúc dự án
 
 /**
  * Hàm tạo bản ghi mẫu cho `resultModel`.
@@ -10,12 +10,12 @@ const { taskModel } = require("../task/task.model"); // Điều chỉnh đườn
 async function createResultRecords(count) {
   try {
     // Lấy tất cả các task_id
-    const tasks = await taskModel.find({}, "_id").exec();
+    const tasks = await taskModel.find({}, '_id').exec();
     const taskCount = tasks.length;
 
     if (taskCount === 0) {
       console.log(
-        "No tasks found. Please create tasks before creating results."
+        'No tasks found. Please create tasks before creating results.',
       );
       return;
     }
@@ -24,13 +24,13 @@ async function createResultRecords(count) {
     for (let i = 0; i < count; i++) {
       const randomTask = tasks[Math.floor(Math.random() * taskCount)];
       const newResult = {
-        user_id: ["6655f61a814c7f6072791ce0", "6655f61a814c7f6072791ce0"][
+        user_id: ['66a70b2c4785031e6235d51c', '6655f61a814c7f6072791ce0'][
           Math.floor(Math.random() * 2)
         ], // Thay thế bằng ObjectId của user thật nếu cần
         task_id: randomTask._id,
         description: `Description for result ${i}`,
         score: Math.floor(Math.random() * 101), // Random score từ 0 đến 100
-        outcome: ["failure", "partial success", "pending review", "success"][
+        outcome: ['failure', 'partial success', 'pending review', 'success'][
           Math.floor(Math.random() * 4)
         ],
         is_delete: false,
@@ -42,7 +42,7 @@ async function createResultRecords(count) {
       await taskModel
         .updateOne(
           { _id: randomTask._id },
-          { $push: { results: createdResult._id } }
+          { $push: { results: createdResult._id } },
         )
         .exec();
 
@@ -50,7 +50,7 @@ async function createResultRecords(count) {
     }
     console.log(`${count} result records inserted!`);
   } catch (err) {
-    console.error("Error creating result records:", err);
+    console.error('Error creating result records:', err);
   }
 }
 /**
@@ -62,12 +62,12 @@ async function createTaskRecords(count) {
   let records = [];
   for (let i = 0; i < count; i++) {
     records.push({
-      user_id: ["66a70b2c4785031e6235d51c"], // Thay thế bằng ObjectId của user thật nếu cần
+      user_id: ['66a70b2c4785031e6235d51c'], // Thay thế bằng ObjectId của user thật nếu cần
       name: `Task ${i}`,
       desc: `Description for task ${i}`,
       deadline: new Date(),
       status: Math.floor(Math.random() * 2), // Random status 0 hoặc 1
-      create_by: "66a70b2c4785031e6235d51c", // Thay thế bằng ObjectId của user thật nếu cần
+      create_by: '66a70b2c4785031e6235d51c', // Thay thế bằng ObjectId của user thật nếu cần
       is_delete: false,
       results: [], // Thêm trường results để chứa các result
     });
@@ -90,7 +90,7 @@ async function run() {
       createResultRecords(count),
     ]);
   } catch (err) {
-    console.error("Error running the script:", err);
+    console.error('Error running the script:', err);
   }
 }
 
