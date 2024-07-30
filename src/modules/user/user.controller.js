@@ -1,6 +1,4 @@
-var mdU = require('./user.model');
-const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
+const userService = require('./user.service');
 
 var objectReturn = {
   status: 1,
@@ -19,88 +17,92 @@ const isCheckMail = (mail) => {
 
   return isCheckMail;
 };
-const getById = async (req, res, next) => {
+const getUserById = async (req, res, next) => {
   try {
     const id = req.params.id;
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
+    if (!userService.isValidObjectId(id)) {
       return res.status(401).json({
         ...objectReturn,
         status: 0,
-        msg: 'id user không hợp lệ',
+        msg: 'ID user không hợp lệ',
         data: null,
       });
     }
 
-    const task = await mdU.userModel.findById(id);
+    const user = await userService.findUserById(id);
 
-    if (!task) {
+    if (!user) {
       return res.status(404).json({
         ...objectReturn,
         status: 0,
-        msg: 'Không tìm user',
+        msg: 'Không tìm thấy user',
         data: null,
       });
-    } else {
-      return res.status(200).json({
-        ...objectReturn,
-        status: 1,
-        msg: 'tìm thành công',
-        data: task,
-      });
     }
+
+    return res.status(200).json({
+      ...objectReturn,
+      status: 1,
+      msg: 'Tìm thành công',
+      data: user,
+    });
   } catch (error) {
-    return res
-      .status(500)
-      .json({ ...objectReturn, status: 0, msg: error.message, data: null });
+    return res.status(500).json({
+      ...objectReturn,
+      status: 0,
+      msg: `Đã xảy ra lỗi khi tìm người dùng: ${error.message}`,
+      data: null,
+    });
   }
 };
-const addUser = async (req, res, next) => {
+const createUser = async (req, res, next) => {
   try {
     const { full_name, email, phone_number, password: userPassword } = req.body;
 
-    const mIsCheckMail = isCheckMail(email);
-    if (mIsCheckMail == false) {
+    if (!isCheckMail(email)) {
       return res
         .status(401)
-        .json({ ...objectReturn, status: 0, msg: 'email lỗi', data: null });
+        .json({ ...objectReturn, status: 0, msg: 'Email lỗi', data: null });
     }
 
-    const existingUser = await mdU.userModel.findOne({ email });
+    const existingUser = await userService.findUserByEmail(email);
     if (existingUser) {
       return res.status(401).json({
         ...objectReturn,
         status: 0,
-        msg: 'email đã tồn tại',
+        msg: 'Email đã tồn tại',
         data: null,
       });
     }
-    const hashedPassword = await bcrypt.hash(userPassword, 10);
 
-    const newUser = mdU.userModel({
+    const hashedPassword = await userService.hashPassword(userPassword);
+
+    const newUser = await userService.createUser({
       full_name,
       password: hashedPassword,
       phone_number,
       email,
     });
 
-    await newUser.save();
-
-    const { Password: pwd, ...userWithoutPassword } = newUser.toObject();
+    const { password, ...userWithoutPassword } = newUser;
 
     return res.status(200).json({
       ...objectReturn,
       status: 1,
-      msg: 'người dùng được tạo thành công',
+      msg: 'Người dùng được tạo thành công',
       data: userWithoutPassword,
     });
   } catch (error) {
-    return res
-      .status(500)
-      .json({ ...objectReturn, status: 0, msg: error.message, data: null });
+    return res.status(500).json({
+      ...objectReturn,
+      status: 0,
+      msg: `Đã xảy ra lỗi khi tạo người dùng: ${error.message}`,
+      data: null,
+    });
   }
 };
-const updateById = async (req, res, next) => {
+const updateUserById = async (req, res, next) => {
   objectReturn.data = null;
 
   try {
@@ -110,18 +112,16 @@ const updateById = async (req, res, next) => {
     delete updateFields.password;
     delete updateFields.registration_date;
 
-    const mIsCheckMail = isCheckMail(updateFields.email);
-    if (mIsCheckMail == false) {
-      return res
-        .status(401)
-        .json({ ...objectReturn, status: 0, msg: 'email lỗi', data: null });
+    if (!isCheckMail(updateFields.email)) {
+      return res.status(401).json({
+        ...objectReturn,
+        status: 0,
+        msg: 'Email lỗi',
+        data: null,
+      });
     }
 
-    const updatedUser = await mdU.userModel.findByIdAndUpdate(
-      userId,
-      updateFields,
-      { new: true },
-    );
+    const updatedUser = await userService.updateUserById(userId, updateFields);
 
     if (!updatedUser) {
       return res.status(401).json({
@@ -131,20 +131,23 @@ const updateById = async (req, res, next) => {
         data: null,
       });
     } else {
-      return res.status(401).json({
+      return res.status(200).json({
         ...objectReturn,
-        status: 0,
+        status: 1,
         msg: 'Cập nhật thành công',
-        data: null,
+        data: updatedUser,
       });
     }
   } catch (error) {
-    return res
-      .status(500)
-      .json({ ...objectReturn, status: 0, msg: error.message, data: null });
+    return res.status(500).json({
+      ...objectReturn,
+      status: 0,
+      msg: `Đã xảy ra lỗi khi cập nhật người dùng: ${error.message}`,
+      data: null,
+    });
   }
 };
-const changePassword = async (req, res, next) => {
+const updatePassword = async (req, res, next) => {
   objectReturn.data = null;
 
   try {
@@ -168,7 +171,7 @@ const changePassword = async (req, res, next) => {
       });
     }
 
-    const user = await mdU.userModel.findById(userId);
+    const user = await userService.findUserById(userId);
     if (!user) {
       return res.status(401).json({
         ...objectReturn,
@@ -178,7 +181,10 @@ const changePassword = async (req, res, next) => {
       });
     }
 
-    const isPasswordMatch = await bcrypt.compare(oldPassword, user.password);
+    const isPasswordMatch = await userService.comparePassword(
+      oldPassword,
+      user.password,
+    );
     if (!isPasswordMatch) {
       return res.status(401).json({
         ...objectReturn,
@@ -188,10 +194,9 @@ const changePassword = async (req, res, next) => {
       });
     }
 
-    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+    const hashedNewPassword = await userService.hashPassword(newPassword);
+    await userService.updatePassword(user, hashedNewPassword);
 
-    user.password = hashedNewPassword;
-    await user.save();
     return res.status(200).json({
       ...objectReturn,
       status: 1,
@@ -202,17 +207,17 @@ const changePassword = async (req, res, next) => {
     return res.status(500).json({
       ...objectReturn,
       status: 0,
-      msg: `Đã xảy ra lỗi khi thay đổi mật khẩu ${error.message}F`,
+      msg: `Đã xảy ra lỗi khi thay đổi mật khẩu: ${error.message}`,
       data: null,
     });
   }
 };
-const userLogin = async (req, res, next) => {
+const loginUser = async (req, res, next) => {
   const { email, password } = req.body;
   objectReturn.data = null;
 
   try {
-    const user = await mdU.userModel.findOne({ email });
+    const user = await userService.findUserByEmail(email);
 
     if (!user) {
       return res.status(401).json({
@@ -222,8 +227,12 @@ const userLogin = async (req, res, next) => {
         data: null,
       });
     }
-    const isPasswordmatch = await bcrypt.compare(password, user.password);
-    if (!isPasswordmatch) {
+
+    const isPasswordMatch = await userService.comparePassword(
+      password,
+      user.password,
+    );
+    if (!isPasswordMatch) {
       return res.status(401).json({
         ...objectReturn,
         status: 0,
@@ -231,12 +240,13 @@ const userLogin = async (req, res, next) => {
         data: null,
       });
     }
+
     objectReturn.data = { user };
 
     return res.status(200).json({
       ...objectReturn,
       status: 1,
-      msg: 'đăng nhập thành công',
+      msg: 'Đăng nhập thành công',
       data: user,
     });
   } catch (error) {
@@ -247,9 +257,9 @@ const userLogin = async (req, res, next) => {
 };
 
 module.exports = {
-  getById,
-  addUser,
-  updateById,
-  changePassword,
-  userLogin,
+  getUserById,
+  createUser,
+  updateUserById,
+  updatePassword,
+  loginUser,
 };

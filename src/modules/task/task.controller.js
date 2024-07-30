@@ -1,69 +1,56 @@
-var mTask = require("./task.model");
-const mongoose = require("mongoose");
-const moment = require("moment");
-require("dotenv").config();
+const taskService = require('./task.service');
 
-let now = moment().format("YYYY-MM-DD HH:mm:ss");
 var objReturn = {
   status: 1,
   msg: 'OK',
   data: null,
 };
-const getById = async (req, res, next) => {
-  objReturn.data = null;
+const getTaskById = async (req, res, next) => {
+  const objReturn = { data: null, status: 0, msg: '' };
 
   try {
     const Id = req.params.Id;
-
-    if (!mongoose.Types.ObjectId.isValid(Id)) {
+    if (!taskService.isValidObjectId(Id)) {
       return res
-        .status(401)
+        .status(400)
         .json({ ...objReturn, status: 0, msg: 'Id không hợp lệ' });
     }
 
-    const task = await mTask.taskModel.findById(Id);
+    const task = await taskService.findTaskById(Id);
 
     if (!task) {
       return res
         .status(404)
         .json({ ...objReturn, status: 0, msg: 'Không tìm thấy nhiệm vụ' });
-    } else {
-      return res.status(200).json({
-        ...objReturn,
-        status: 1,
-        msg: 'đăng nhập thành công',
-        data: task,
-      });
     }
+
+    return res.status(200).json({
+      ...objReturn,
+      status: 1,
+      msg: 'Tìm thành công',
+      data: task,
+    });
   } catch (error) {
     return res
       .status(500)
       .json({ ...objReturn, status: 0, msg: error.message });
   }
 };
-const getByUserId = async (req, res, next) => {
-  const objReturn = { data: null, status: 0, msg: '' };
-
+const getTasksByUserId = async (req, res, next) => {
   try {
     const userId = req.params.userId;
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 12;
 
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
+    if (!taskService.isValidObjectId(userId)) {
       return res.status(400).json({ ...objReturn, msg: 'userId không hợp lệ' });
     }
 
-    const totalItems = await mTask.taskModel.countDocuments({
-      user_id: userId,
-    });
+    const totalItems = await taskService.countTasksByUserId(userId);
     const totalPages = Math.ceil(totalItems / limit);
     const skip = (page - 1) * limit;
 
-    const tasks = await mTask.taskModel
-      .find({ user_id: userId, is_delete: false })
-      .populate('results')
-      .skip(skip)
-      .limit(limit);
+    const tasks = await taskService.findTasksByUserId(userId, skip, limit);
 
     if (tasks.length <= 0) {
       return res
@@ -91,12 +78,13 @@ const getByUserId = async (req, res, next) => {
     return res.status(500).json({ ...objReturn, msg: error.message });
   }
 };
-const addTask = async (req, res, next) => {
+const createTask = async (req, res, next) => {
   objReturn.data = null;
+
   try {
     const { user_id, name, desc, image, deadline, create_by, tags } = req.body;
 
-    if (!mongoose.Types.ObjectId.isValid(user_id)) {
+    if (!taskService.isValidObjectId(user_id)) {
       return res
         .status(401)
         .json({ ...objReturn, status: 0, msg: 'userId không hợp lệ' });
@@ -111,17 +99,9 @@ const addTask = async (req, res, next) => {
       });
     }
 
-    const newTask = new mTask.taskModel({
-      user_id,
-      name,
-      desc,
-      image,
-      deadline,
-      create_by,
-      tags,
-    });
+    const taskData = { user_id, name, desc, image, deadline, create_by, tags };
+    const saveTask = await taskService.addNewTask(taskData);
 
-    const saveTask = await newTask.save();
     return res.status(200).json({
       ...objReturn,
       status: 1,
@@ -137,24 +117,24 @@ const addTask = async (req, res, next) => {
     });
   }
 };
-const updateById = async (req, res, next) => {
+const updateTaskById = async (req, res, next) => {
   objReturn.data = null;
 
   try {
     const taskId = req.params.taskId;
 
-    if (!mongoose.Types.ObjectId.isValid(taskId)) {
+    if (!taskService.isValidObjectId(taskId)) {
       return res
         .status(401)
         .json({ ...objReturn, status: 0, msg: 'taskId không hợp lệ' });
     }
 
-    const findTask = await mTask.taskModel.findById(taskId);
+    const findTask = await taskService.findTaskById(taskId);
 
     if (!findTask) {
       return res
         .status(404)
-        .json({ ...objReturn, status: 0, msg: 'taskId not found' });
+        .json({ ...objReturn, status: 0, msg: 'Không tìm thấy taskId' });
     }
 
     const updateFields = req.body;
@@ -168,11 +148,7 @@ const updateById = async (req, res, next) => {
     delete updateFields.create_by;
     delete updateFields.user_id;
 
-    const updateTask = await mTask.taskModel.findByIdAndUpdate(
-      taskId,
-      updateFields,
-      { new: true },
-    );
+    const updateTask = await taskService.updateTaskById(taskId, updateFields);
 
     if (!updateTask) {
       return res.status(401).json({
@@ -184,7 +160,7 @@ const updateById = async (req, res, next) => {
       return res.status(200).json({
         ...objReturn,
         status: 1,
-        msg: 'sửa thành công',
+        msg: 'Cập nhật thành công',
         data: updateTask,
       });
     }
@@ -194,16 +170,14 @@ const updateById = async (req, res, next) => {
       .json({ ...objReturn, status: 0, msg: error.message });
   }
 };
-const deleteById = async (req, res, next) => {
-  objReturn.data = null;
-
+const deleteTaskById = async (req, res, next) => {
   try {
     const taskId = req.params.taskId;
     const delete_by = req.body.delete_by;
 
     if (
-      !mongoose.Types.ObjectId.isValid(taskId) ||
-      !mongoose.Types.ObjectId.isValid(delete_by)
+      !taskService.isValidObjectId(taskId) ||
+      !taskService.isValidObjectId(delete_by)
     ) {
       return res.status(401).json({
         ...objReturn,
@@ -211,27 +185,30 @@ const deleteById = async (req, res, next) => {
         msg: 'taskId hoặc delete_by không hợp lệ',
       });
     }
-    const findTask = await mTask.taskModel.findById(taskId);
+
+    const findTask = await taskService.findTaskById(taskId);
     if (!findTask) {
-      return res
-        .status(404)
-        .json({ ...objReturn, status: 0, msg: 'taskId not found' });
+      return res.status(404).json({
+        ...objReturn,
+        status: 0,
+        msg: 'Không tìm thấy taskId',
+      });
     }
 
-    const delTask = await mTask.taskModel.findByIdAndUpdate(
-      taskId,
-      { delete_by: delete_by, is_delete: true },
-      { new: true },
-    );
-
+    const delTask = await taskService.deleteTaskById(taskId, delete_by);
     if (!delTask) {
-      return res
-        .status(401)
-        .json({ ...objReturn, status: 0, msg: 'Không tìm thấy' });
+      return res.status(401).json({
+        ...objReturn,
+        status: 0,
+        msg: 'Không tìm thấy nhiệm vụ',
+      });
     } else {
-      return res
-        .status(200)
-        .json({ ...objReturn, status: 1, msg: 'xóa thành công', data: null });
+      return res.status(200).json({
+        ...objReturn,
+        status: 1,
+        msg: 'Xóa thành công',
+        data: null,
+      });
     }
   } catch (error) {
     return res.status(500).json({
@@ -242,9 +219,7 @@ const deleteById = async (req, res, next) => {
     });
   }
 };
-const getByName = async (req, res, next) => {
-  const objReturn = { data: null, status: 0, msg: '' };
-
+const searchTasksByName = async (req, res, next) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 12;
@@ -252,30 +227,23 @@ const getByName = async (req, res, next) => {
 
     // Tạo điều kiện tìm kiếm
     const searchCondition = {
-      is_delete: false, // Tìm kiếm không phân biệt chữ hoa/thường
+      is_delete: false,
       name: { $regex: searchName, $options: 'i' }, // Tìm kiếm không phân biệt chữ hoa/thường
     };
 
-    const totalItems = await mTask.taskModel.countDocuments(searchCondition);
+    const totalItems = await taskService.countTasks(searchCondition);
     const totalPages = Math.ceil(totalItems / limit);
     const skip = (page - 1) * limit;
 
-    const tasks = await mTask.taskModel
-      .find(searchCondition)
-      .populate('results')
-      .skip(skip)
-      .limit(limit)
-      .sort({ createdAt: -1 }); // Sắp xếp theo thời gian tạo mới nhất
+    const tasks = await taskService.findTasks(searchCondition, skip, limit);
 
-    if (tasks.length <= 0) {
-      return res
-        .status(404)
-        .json({
-          ...objReturn,
-          status: 0,
-          msg: 'Không tìm thấy nhiệm vụ',
-          data: null,
-        });
+    if (tasks.length === 0) {
+      return res.status(404).json({
+        ...objReturn,
+        status: 0,
+        msg: 'Không tìm thấy nhiệm vụ',
+        data: null,
+      });
     }
 
     const paginationInfo = {
@@ -298,11 +266,12 @@ const getByName = async (req, res, next) => {
     return res.status(500).json({ ...objReturn, msg: error.message });
   }
 };
+
 module.exports = {
-  getById,
-  getByUserId,
-  addTask,
-  updateById,
-  deleteById,
-  getByName,
+  getTaskById,
+  getTasksByUserId,
+  createTask,
+  updateTaskById,
+  deleteTaskById,
+  searchTasksByName,
 };
