@@ -1,15 +1,15 @@
-const db = require('../../config/db');
+const database = require('../../config/db');
 const { timestampPlugin, blockCreateBy } = require('./result.middleware');
 
-const resultSchema = new db.mongoose.Schema(
+const resultSchema = new database.mongoose.Schema(
   {
     user_id: {
-      type: db.mongoose.Schema.Types.ObjectId,
+      type: database.mongoose.Schema.Types.ObjectId,
       ref: 'userModel',
       required: true,
     },
     task_id: {
-      type: db.mongoose.Schema.Types.ObjectId,
+      type: database.mongoose.Schema.Types.ObjectId,
       ref: 'taskModel',
       required: true,
     },
@@ -29,6 +29,6 @@ const resultSchema = new db.mongoose.Schema(
 resultSchema.plugin(timestampPlugin);
 blockCreateBy(resultSchema);
 
-let resultModel = db.mongoose.model('resultModel', resultSchema);
+let resultModel = database.mongoose.model('resultModel', resultSchema);
 
 module.exports = { resultModel };
