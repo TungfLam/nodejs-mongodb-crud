@@ -5,6 +5,7 @@ const dotenv = require('dotenv');
 dotenv.config();
 const cloudinary = require('cloudinary').v2;
 
+// Cấu hình cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -101,7 +102,7 @@ const createResultsUserTask = async (data, task_id) => {
     if (!task_id) {
       throw new Error({ message: 'không nhận được task id' });
     }
-    const { user_id, description, score, outcome } = data;
+    const { user_id, description, score, outcome, ...body } = data;
     // Tạo mới bản ghi từ các trường nhận được
     const result_task = await Result.resultModel.create({
       user_id,
@@ -109,6 +110,7 @@ const createResultsUserTask = async (data, task_id) => {
       description,
       score,
       outcome,
+      ...body,
     });
     if (!result_task) {
       throw new Error({ message: 'không thêm được result mới!' });
@@ -240,6 +242,7 @@ const deleteResultsUserTask = async (id) => {
     throw e;
   }
 };
+
 module.exports = {
   getResultsUserTasks,
   createResultsUserTask,

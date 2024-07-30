@@ -1,4 +1,6 @@
 const resultService = require('./result.service');
+const Result = require('./result.model');
+const path = require('path');
 
 // Hàm lấy danh sách kết quả khi được submit của mỗi task
 const getResultsUserTasks = async (req, res) => {
@@ -29,14 +31,15 @@ const getResultsUserTasks = async (req, res) => {
 const createResultsUserTask = async (req, res) => {
   try {
     const task_id = req.params.task_id;
-    const { user_id, description, score, outcome, ...data } = req.body;
+    const body = { ...req.body };
+    const { user_id, description, score, outcome, ...data } = body;
     const outcome_exam = [
       'failure',
       'partial success',
       'pending review',
       'success',
     ];
-    const file = req.file;
+    const files = req.files;
     // Kiểm tra user_id có giá trị ko
     if (!user_id) {
       return res.status(400).json({
@@ -65,16 +68,20 @@ const createResultsUserTask = async (req, res) => {
         message: 'outcome phải là 1 trong những dữ liệu có sẵn',
       });
     }
-    if (file) {
-      const upload = await resultService.uploadImage(file);
-      if (upload) {
-        data.result_image = upload.url;
-      }
+    // if (file.length !== 0) {
+    //   const upload = await resultService.uploadImage(file);
+    //   if (upload) {
+    //     data.result_image = upload.url;
+    //   }
+    // }
+    if (files.length !== 0) {
+      body.result_image = [];
+      files.map((file) => {
+        body.result_image.push(file.path);
+      });
     }
-    const response = await resultService.createResultsUserTask(
-      req.body,
-      task_id,
-    );
+    console.log(body);
+    const response = await resultService.createResultsUserTask(body, task_id);
     return res.status(200).json(response);
   } catch (e) {
     return res.status(400).json({
@@ -105,8 +112,8 @@ const getDetailResultsUserTask = async (req, res) => {
 const updateResultsUserTask = async (req, res) => {
   try {
     const result_id = req.params.result_id;
-    const data = req.body;
-    const file = req.files;
+    const data = { ...req.body };
+    const files = req.files;
     const outcome_exam = [
       'failure',
       'partial success',
@@ -127,7 +134,14 @@ const updateResultsUserTask = async (req, res) => {
       });
     }
     // Kiểm tra trường điểm có phải dạng number không
-    if (typeof Number(data.score) !== 'number') {
+    if (!data.score) {
+      return res.status(400).json({
+        status: 'ERR',
+        message: 'không tìm thấy score',
+      });
+    }
+    data.score = Number(data.score);
+    if (typeof data.score !== 'number') {
       return res.status(400).json({
         status: 'ERR',
         message: 'score phải là số',
@@ -140,14 +154,13 @@ const updateResultsUserTask = async (req, res) => {
         message: 'outcome phải là 1 trong những dữ liệu có sẵn',
       });
     }
-    const upload = await resultService.uploadImage(file);
-    if (upload) {
-      data.result_image = upload.url;
+    if (files.length !== 0) {
+      data.result_image = [];
+      files.map((file) => {
+        data.result_image.push(file.path);
+      });
     }
-    const response = await resultService.updateResultsUserTask(
-      result_id,
-      req.body,
-    );
+    const response = await resultService.updateResultsUserTask(result_id, data);
     return res.status(200).json(response);
   } catch (error) {
     return res.status(400).json({
@@ -156,6 +169,7 @@ const updateResultsUserTask = async (req, res) => {
   }
 };
 
+// Hàm xóa result đã submit
 const deleteResultsUserTask = async (req, res) => {
   try {
     const result_id = req.params.result_id;
