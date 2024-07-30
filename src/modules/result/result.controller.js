@@ -80,7 +80,7 @@ const createResultsUserTask = async (req, res) => {
         body.result_image.push(file.path);
       });
     }
-    console.log(body);
+    // chuyển sang file service để xử lý
     const response = await resultService.createResultsUserTask(body, task_id);
     return res.status(200).json(response);
   } catch (e) {
@@ -100,6 +100,7 @@ const getDetailResultsUserTask = async (req, res) => {
         message: 'không tìm thấy result_id',
       });
     }
+    // chuyển sang file service để xử lý
     const response = await resultService.getDetailResultsUserTask(result_id);
     return res.status(200).json(response);
   } catch (e) {
@@ -120,12 +121,6 @@ const updateResultsUserTask = async (req, res) => {
       'pending review',
       'success',
     ];
-    if (!data.user_id) {
-      return res.status(400).json({
-        status: 'ERR',
-        message: 'không tìm thấy user_id',
-      });
-    }
     // Kiểm tra description có giá trị ko
     if (!data.description) {
       return res.status(400).json({
@@ -159,7 +154,9 @@ const updateResultsUserTask = async (req, res) => {
       files.map((file) => {
         data.result_image.push(file.path);
       });
+      resultService.deleteFile(result_id);
     }
+    // chuyển sang file service để xử lý
     const response = await resultService.updateResultsUserTask(result_id, data);
     return res.status(200).json(response);
   } catch (error) {
@@ -180,6 +177,7 @@ const deleteResultsUserTask = async (req, res) => {
         message: 'Không tìm thấy result_id',
       });
     }
+    // chuyển sang file service để xử lý
     const response = await resultService.deleteResultsUserTask(result_id);
     return res.status(200).json(response);
   } catch (e) {

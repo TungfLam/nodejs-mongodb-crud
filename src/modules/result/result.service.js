@@ -1,6 +1,7 @@
 const Result = require('./result.model');
 const Task = require('../task/task.model');
-
+const fs = require('fs');
+const path = require('path');
 const dotenv = require('dotenv');
 dotenv.config();
 const cloudinary = require('cloudinary').v2;
@@ -28,6 +29,7 @@ const getResultsUserTasks = (id, limit, page, sort, filter) => {
       // Lấy tổng số bản ghi trong bảng Result
       const total_task = await Result.resultModel.countDocuments({
         task_id: id,
+        is_delete: false,
       });
       const response = {
         status: 'OK',
@@ -186,6 +188,35 @@ const updateResultsUserTask = async (result_id, data) => {
     throw e;
   }
 };
+
+/**
+ * Lấy danh sách kết quả khi được submit của mỗi user
+ * @param {string} result_id - Id của task cần sửa thông tin.
+ * @returns {Object} - Dữ liệu phản hồi chứa danh sách các thuộc tính.
+ * @throws {Error} - Ném ra lỗi nếu gọi API thất bại.
+ */
+const deleteFile = async (result_id) => {
+  try {
+    // Kiểm tra có tồn tại task id không
+    if (!result_id) {
+      throw new Error({ message: 'không nhận được result_id id' });
+    }
+    const re = await Result.resultModel.findById({ _id: result_id });
+    re.result_image.map((image) => {
+      const fileToDelete = path.join(__dirname, `../../../${image}`);
+      fs.unlink(fileToDelete, (err) => {
+        if (err) {
+          console.error('Không thể xóa file:', err);
+          return;
+        }
+        console.log('File đã được xóa thành công.');
+      });
+    });
+  } catch (e) {
+    throw e;
+  }
+};
+
 /**
  * Lấy danh sách kết quả khi được submit của mỗi user
  * @param {string} file - ảnh được tải lên.
@@ -250,4 +281,5 @@ module.exports = {
   deleteResultsUserTask,
   uploadImage,
   getDetailResultsUserTask,
+  deleteFile,
 };
