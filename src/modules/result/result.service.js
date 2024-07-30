@@ -6,10 +6,11 @@ dotenv.config();
 const cloudinary = require('cloudinary').v2;
 
 cloudinary.config({
-  cloud_name: process.env.CLOUD_NAME,
-  api_key: process.env.API_KEY,
-  api_secret: process.env.API_SECRET,
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
+
 /**
  * Lấy danh sách kết quả khi được submit của mỗi user
  * @param {string} id - Id của task cần lấy danh sách kết quả.
@@ -201,19 +202,16 @@ const uploadImage = (file) => {
       }
       //tích hợp tải file lên cloudinary
       cloudinary.uploader
-        .upload_stream({ folder: 'lifetek' }, (error, result) => {
+        .upload_stream({ folder: 'uploads' }, (error, result) => {
           if (error) {
-            return resolve({
-              status: '404',
-              message: 'upload file failed',
-            });
+            return reject(error);
           }
           return resolve({
             public_id: result.public_id,
             url: result.secure_url,
           });
         })
-        .end(file.buffer);
+        .end(buffer);
     } catch (e) {
       reject(e);
     }

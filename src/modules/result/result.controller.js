@@ -36,7 +36,6 @@ const createResultsUserTask = async (req, res) => {
       'pending review',
       'success',
     ];
-    console.log('req.body', task_id);
     const file = req.file;
     // Kiểm tra user_id có giá trị ko
     if (!user_id) {
