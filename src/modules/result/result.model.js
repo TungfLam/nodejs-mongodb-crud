@@ -47,7 +47,7 @@ const resultSchema = new database.mongoose.Schema(
     },
     {
         collection: 'results',
-        timestamps: { createdAt: 'create_at', updatedAt: 'update_at' },
+        timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
     }, // Lưu trữ trong collection 'results' và thêm timestamp tự động.
 );
 
