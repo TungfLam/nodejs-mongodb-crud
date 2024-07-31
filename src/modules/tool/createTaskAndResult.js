@@ -3,8 +3,8 @@ const { taskModel } = require('../task/task.model');
 const { faker } = require('@faker-js/faker');
 const mongoose = require('mongoose');
 
-const USER_ID = "6655f61a814c7f6072791ce0";
-const TOTAL_TASKS = 100000;
+const USER_ID = '6655f61a814c7f6072791ce0';
+const TOTAL_TASKS = 1000000;
 const BATCH_SIZE = 1000;
 
 // Xử lý batch:
@@ -16,9 +16,10 @@ const BATCH_SIZE = 1000;
 // Thời gian thực thi ngắn hơn:
 // Với dữ liệu lớn, thời gian thực thi sẽ ngắn hơn đáng kể so với phương pháp insert từng document.
 
-
-async function generateDataInsertMany() {
+const generateDataInsertMany = async (req, res, next) => {
     try {
+        let totalCreated = 0;
+
         for (let i = 0; i < TOTAL_TASKS; i += BATCH_SIZE) {
             const taskBatch = [];
             const resultBatch = [];
@@ -38,7 +39,12 @@ async function generateDataInsertMany() {
                         result_image: [faker.image.url(), faker.image.url()],
                         score: Math.floor(Math.random() * 101),
                         feedback: faker.lorem.sentence(),
-                        outcome: ['failure', 'partial success', 'pending review', 'success'][Math.floor(Math.random() * 4)],
+                        outcome: [
+                            'failure',
+                            'partial success',
+                            'pending review',
+                            'success',
+                        ][Math.floor(Math.random() * 4)],
                     });
                     results.push(resultId);
                 }
@@ -60,32 +66,48 @@ async function generateDataInsertMany() {
             await resultModel.insertMany(resultBatch);
             await taskModel.insertMany(taskBatch);
 
-            console.log(`Đã tạo ${i + taskBatch.length} tasks`);
+            totalCreated += taskBatch.length;
+            console.log(`Đã tạo ${totalCreated} tasks`);
         }
 
-        console.log('Hoàn thành tạo dữ liệu');
+        console.log('Hoàn thành tạo dữ liệu insertMany');
+        return res.status(200).json({
+            status: 1,
+            msg: 'Hoàn thành tạo dữ liệu insertMany',
+            totalCreated: totalCreated,
+        });
     } catch (error) {
         console.error('Lỗi:', error);
-    } finally {
-        mongoose.disconnect();
+        return res.status(500).json({
+            status: 0,
+            msg: 'Đã xảy ra lỗi khi tạo dữ liệu',
+            error: error.message,
+        });
     }
-}
+};
 
-
-async function generateDataInsertBulk() {
+const generateDataInsertBulk = async (req, res, next) => {
     try {
-        for (let i = 0; i < TOTAL_TASKS; i += BATCH_SIZE) {
-            const taskBulk = taskModel.collection.initializeUnorderedBulkOp();
-            const resultBulk = resultModel.collection.initializeUnorderedBulkOp();
+        let totalCreatedBulk = 0; // lưu trữ tổng số lượng task đẫ được tạo
 
+        // chia dữ liệu thành các lô batch để xử lý
+        for (let i = 0; i < TOTAL_TASKS; i += BATCH_SIZE) {
+            // Khởi tạo bulk operation cho hai bảng task và result
+            const taskBulk = taskModel.collection.initializeUnorderedBulkOp();
+            const resultBulk =
+                resultModel.collection.initializeUnorderedBulkOp();
+
+            // tạo và thêm dữ liệu cho mỗi batch
             for (let j = 0; j < BATCH_SIZE && i + j < TOTAL_TASKS; j++) {
                 const taskId = new mongoose.Types.ObjectId();
-                const resultCount = Math.floor(Math.random() * 5) + 1; // 1-5 results
-                const results = [];
+                const resultCount = Math.floor(Math.random() * 5) + 1;
+                const results = []; // mảng chứa các objectId của result cho task hiện tại
 
+                // tạo các document result ngẫu nhiên.
                 for (let k = 0; k < resultCount; k++) {
                     const resultId = new mongoose.Types.ObjectId();
                     resultBulk.insert({
+                        // thêm document result vào bulk operation
                         _id: resultId,
                         user_id: USER_ID,
                         task_id: taskId,
@@ -93,11 +115,17 @@ async function generateDataInsertBulk() {
                         result_image: [faker.image.url(), faker.image.url()],
                         score: Math.floor(Math.random() * 101),
                         feedback: faker.lorem.sentence(),
-                        outcome: ['failure', 'partial success', 'pending review', 'success'][Math.floor(Math.random() * 4)],
+                        outcome: [
+                            'failure',
+                            'partial success',
+                            'pending review',
+                            'success',
+                        ][Math.floor(Math.random() * 4)], // Outcome ngẫu nhiên.
                     });
-                    results.push(resultId);
+                    results.push(resultId); // thêm objectId của result vào mảng
                 }
 
+                // tạoo document task ngẫu nhiên và thêm vào bulk operation
                 taskBulk.insert({
                     _id: taskId,
                     user_id: USER_ID,
@@ -112,21 +140,31 @@ async function generateDataInsertBulk() {
                 });
             }
 
+            // thực thi bulk operation cho result và task
             await resultBulk.execute();
             await taskBulk.execute();
 
+            totalCreatedBulk += taskBulk.length;
             console.log(`Đã tạo ${i + BATCH_SIZE} tasks`);
         }
 
-        console.log('Hoàn thành tạo dữ liệu');
+        console.log('Hoàn thành tạo dữ liệu Bulk');
+        return res.status(200).json({
+            status: 1,
+            msg: 'Hoàn thành tạo dữ liệu Bulk',
+            totalCreated: totalCreatedBulk,
+        });
     } catch (error) {
         console.error('Lỗi:', error);
-    } finally {
-        mongoose.disconnect();
+        return res.status(500).json({
+            status: 0,
+            msg: 'Đã xảy ra lỗi khi tạo dữ liệu',
+            error: error.message,
+        });
     }
-}
+};
 
 module.exports = {
     generateDataInsertMany,
     generateDataInsertBulk,
-}
+};

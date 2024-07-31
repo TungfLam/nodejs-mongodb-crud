@@ -11,9 +11,9 @@ const multer = require('multer');
  * @return {Promise<number>} Một Promise sẽ trả về số lượng tài liệu (nhiệm vụ) thỏa mãn điều kiện tìm kiếm.
  */
 const countTasks = async (searchCondition) => {
-  // Đếm số lượng tài liệu trong tập hợp nhiệm vụ theo điều kiện tìm kiếm sử dụng countDocuments.
-  // Trả về số lượng tài liệu được bọc trong một Promise.
-  return await task.taskModel.countDocuments(searchCondition);
+    // Đếm số lượng tài liệu trong tập hợp nhiệm vụ theo điều kiện tìm kiếm sử dụng countDocuments.
+    // Trả về số lượng tài liệu được bọc trong một Promise.
+    return await task.taskModel.countDocuments(searchCondition);
 };
 
 /**
@@ -25,12 +25,12 @@ const countTasks = async (searchCondition) => {
  * @return {Promise<Array<Object>>} Một Promise sẽ trả về một mảng các nhiệm vụ thỏa mãn điều kiện tìm kiếm.
  */
 const findTasks = async (searchCondition, skip, limit) => {
-  return await task.taskModel
-    .find(searchCondition) // Tìm nhiệm vụ theo điều kiện tìm kiếm.
-    .populate('results') // Nạp các tài liệu liên quan từ trường `results`.
-    .skip(skip) // Bỏ qua số lượng tài liệu theo `skip` để phân trang.
-    .limit(limit) // Giới hạn số lượng tài liệu lấy theo `limit` để phân trang.
-    .sort({ createdAt: -1 }); // Sắp xếp kết quả theo trường `createdAt` theo thứ tự giảm dần.
+    return await task.taskModel
+        .find(searchCondition) // Tìm nhiệm vụ theo điều kiện tìm kiếm.
+        .populate('results') // Nạp các tài liệu liên quan từ trường `results`.
+        .skip(skip) // Bỏ qua số lượng tài liệu theo `skip` để phân trang.
+        .limit(limit) // Giới hạn số lượng tài liệu lấy theo `limit` để phân trang.
+        .sort({ createdAt: -1 }); // Sắp xếp kết quả theo trường `createdAt` theo thứ tự giảm dần.
 };
 
 /**
@@ -40,7 +40,7 @@ const findTasks = async (searchCondition, skip, limit) => {
  * @return {boolean} Trả về true nếu ID là hợp lệ theo định dạng ObjectId của MongoDB, false nếu không hợp lệ.
  */
 const isValidObjectId = (id) => {
-  return mongoose.Types.ObjectId.isValid(id);
+    return mongoose.Types.ObjectId.isValid(id);
 };
 
 /**
@@ -50,7 +50,7 @@ const isValidObjectId = (id) => {
  * @return {Promise<Object|null>} Một Promise sẽ trả về đối tượng nhiệm vụ nếu tìm thấy, hoặc null nếu không tìm thấy.
  */
 const findTaskById = async (taskId) => {
-  return await task.taskModel.findById(taskId).populate('results');
+    return await task.taskModel.findById(taskId).populate('results');
 };
 
 /**
@@ -61,11 +61,11 @@ const findTaskById = async (taskId) => {
  * @return {Promise<Object|null>} Một Promise sẽ trả về đối tượng nhiệm vụ đã được cập nhật nếu thành công, hoặc null nếu không tìm thấy nhiệm vụ.
  */
 const deleteTaskById = async (taskId, deleteBy) => {
-  return await task.taskModel.findByIdAndUpdate(
-    taskId,
-    { delete_by: deleteBy, is_delete: true }, // Cập nhật nhiệm vụ với thông tin xóa.
-    { new: true }, // Trả về đối tượng nhiệm vụ đã cập nhật.
-  );
+    return await task.taskModel.findByIdAndUpdate(
+        taskId,
+        { delete_by: deleteBy, is_delete: true }, // Cập nhật nhiệm vụ với thông tin xóa.
+        { new: true }, // Trả về đối tượng nhiệm vụ đã cập nhật.
+    );
 };
 
 /**
@@ -76,9 +76,9 @@ const deleteTaskById = async (taskId, deleteBy) => {
  * @return {Promise<Object|null>} Một Promise sẽ trả về đối tượng nhiệm vụ đã được cập nhật nếu thành công, hoặc null nếu không tìm thấy nhiệm vụ.
  */
 const updateTaskById = async (taskId, updateFields) => {
-  return await task.taskModel.findByIdAndUpdate(taskId, updateFields, {
-    new: true, // Trả về đối tượng nhiệm vụ đã cập nhật.
-  });
+    return await task.taskModel.findByIdAndUpdate(taskId, updateFields, {
+        new: true, // Trả về đối tượng nhiệm vụ đã cập nhật.
+    });
 };
 
 /**
@@ -88,8 +88,8 @@ const updateTaskById = async (taskId, updateFields) => {
  * @return {Promise<Object>} Một Promise sẽ trả về đối tượng nhiệm vụ mới được lưu.
  */
 const addNewTask = async (taskData) => {
-  const newTask = new task.taskModel(taskData); // Tạo một đối tượng nhiệm vụ mới với dữ liệu cung cấp.
-  return await newTask.save(); // Lưu nhiệm vụ mới vào cơ sở dữ liệu và trả về đối tượng nhiệm vụ đã lưu.
+    const newTask = new task.taskModel(taskData); // Tạo một đối tượng nhiệm vụ mới với dữ liệu cung cấp.
+    return await newTask.save(); // Lưu nhiệm vụ mới vào cơ sở dữ liệu và trả về đối tượng nhiệm vụ đã lưu.
 };
 
 /**
@@ -101,11 +101,11 @@ const addNewTask = async (taskData) => {
  * @return {Promise<Array<Object>>} Một Promise sẽ trả về một mảng các nhiệm vụ thỏa mãn điều kiện tìm kiếm.
  */
 const findTasksByUserId = async (userId, skip, limit) => {
-  return await task.taskModel
-    .find({ user_id: userId, is_delete: false }) // Tìm nhiệm vụ của người dùng và chưa bị xóa.
-    .populate('results') // Nạp các tài liệu liên quan từ trường `results`.
-    .skip(skip) // Bỏ qua số lượng tài liệu theo `skip` để phân trang.
-    .limit(limit); // Giới hạn số lượng tài liệu lấy theo `limit` để phân trang.
+    return await task.taskModel
+        .find({ user_id: userId, is_delete: false }) // Tìm nhiệm vụ của người dùng và chưa bị xóa.
+        .populate('results') // Nạp các tài liệu liên quan từ trường `results`.
+        .skip(skip) // Bỏ qua số lượng tài liệu theo `skip` để phân trang.
+        .limit(limit); // Giới hạn số lượng tài liệu lấy theo `limit` để phân trang.
 };
 
 /**
@@ -115,30 +115,30 @@ const findTasksByUserId = async (userId, skip, limit) => {
  * @return {Promise<number>} Một Promise sẽ trả về số lượng nhiệm vụ thỏa mãn điều kiện.
  */
 const countTasksByUserId = async (userId) => {
-  return await task.taskModel.countDocuments({
-    user_id: userId, // Lọc nhiệm vụ theo ID người dùng.
-    is_delete: false, // Lọc các nhiệm vụ chưa bị xóa.
-  });
+    return await task.taskModel.countDocuments({
+        user_id: userId, // Lọc nhiệm vụ theo ID người dùng.
+        is_delete: false, // Lọc các nhiệm vụ chưa bị xóa.
+    });
 };
 
 /**
  * Cấu hình Cloudinary với thông tin từ biến môi trường.
  */
 cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME, // Tên cloud của Cloudinary.
-  api_key: process.env.CLOUDINARY_API_KEY, // Khóa API của Cloudinary.
-  api_secret: process.env.CLOUDINARY_API_SECRET, // Bí mật API của Cloudinary.
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME, // Tên cloud của Cloudinary.
+    api_key: process.env.CLOUDINARY_API_KEY, // Khóa API của Cloudinary.
+    api_secret: process.env.CLOUDINARY_API_SECRET, // Bí mật API của Cloudinary.
 });
 
 /**
  * Cấu hình lưu trữ cho Multer sử dụng Cloudinary.
  */
 const storage = new CloudinaryStorage({
-  cloudinary: cloudinary, // Đối tượng Cloudinary đã cấu hình.
-  params: {
-    folder: 'uploads', // Thư mục lưu trữ trong Cloudinary.
-    allowed_formats: ['jpg', 'png'], // Các định dạng hình ảnh được phép tải lên.
-  },
+    cloudinary: cloudinary, // Đối tượng Cloudinary đã cấu hình.
+    params: {
+        folder: 'uploads', // Thư mục lưu trữ trong Cloudinary.
+        allowed_formats: ['jpg', 'png'], // Các định dạng hình ảnh được phép tải lên.
+    },
 });
 
 /**
@@ -147,14 +147,14 @@ const storage = new CloudinaryStorage({
 const upload = multer({ storage: storage }); // Đối tượng Multer để xử lý tệp tải lên.
 
 module.exports = {
-  countTasks,
-  findTasks,
-  isValidObjectId,
-  findTaskById,
-  deleteTaskById,
-  updateTaskById,
-  addNewTask,
-  findTasksByUserId,
-  countTasksByUserId,
-  upload,
+    countTasks,
+    findTasks,
+    isValidObjectId,
+    findTaskById,
+    deleteTaskById,
+    updateTaskById,
+    addNewTask,
+    findTasksByUserId,
+    countTasksByUserId,
+    upload,
 };
