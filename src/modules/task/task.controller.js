@@ -364,12 +364,37 @@ const searchTasksByName = async (req, res, next) => {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 12;
         const searchName = req.query.name || '';
+        const startDate = req.query.startDate ? new Date(req.query.startDate) : null;
+        const endDate = req.query.endDate ? new Date(req.query.endDate) : null;
+
+
+        // ca9uwbouyqberv0ucqbe
+        const status = req.query.status ? parseInt(req.query.status) : null;
+        const priority = req.query.priority || null;
+        const isCompleted = req.query.is_completed !== undefined ? req.query.is_completed === 'true' : null;
+        const difficulty = req.query.difficulty || null;
+        const location = req.query.location || null;
 
         // Tạo điều kiện tìm kiếm
         const searchCondition = {
             is_delete: false, // Tìm kiếm những task chưa được xóa
             name: { $regex: searchName, $options: 'i' }, // Tìm kiếm không phân biệt chữ hoa/thường
         };
+
+        // Nếu có startDate và endDate, thêm vào điều kiện tìm kiếm
+        if (startDate && endDate) {
+            searchCondition.deadline = {
+                $gte: startDate, // Ngày bắt đầu (bao gồm)
+                $lte: endDate,   // Ngày kết thúc (bao gồm)
+            };
+        }
+
+        // afvjhqo3rnvy3087rv gquhpwieo ecq-n90ruvgh
+        if (status !== null) searchCondition.status = status;
+        if (priority) searchCondition.priority = priority;
+        if (isCompleted !== null) searchCondition.is_completed = isCompleted;
+        if (difficulty) searchCondition.difficulty = difficulty;
+        if (location) searchCondition.location = location;
 
         const totalItems = await taskService.countTasks(searchCondition);
         const totalPages = Math.ceil(totalItems / limit);
