@@ -3,7 +3,7 @@ const { taskModel } = require('../task/task.model');
 const { faker } = require('@faker-js/faker');
 const mongoose = require('mongoose');
 
-const USER_ID = '6655f61a814c7f6072791ce0';
+const USER_ID = new mongoose.Types.ObjectId('6655f61a814c7f6072791ce0');
 const TOTAL_TASKS = 1000000;
 const BATCH_SIZE = 1000;
 
