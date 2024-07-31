@@ -39,8 +39,8 @@ const getResultsUserTasks = (id, limit, page, sort, filter) => {
           total: total_task,
           page_current: page + 1,
           total_page: Math.ceil(total_task / limit),
-          hasNextPage: page + 1 < Math.ceil(total_task / limit),
-          hasPrevPage: page + 1 > 1,
+          has_next_page: page + 1 < Math.ceil(total_task / limit),
+          has_prev_page: page + 1 > 1,
         },
       };
       // Kiểm tra có filter được truyền vào không
