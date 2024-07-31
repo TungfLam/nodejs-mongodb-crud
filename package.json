@@ -10,6 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@faker-js/faker": "^8.4.1",
     "base-64": "^1.0.0",
     "bcrypt": "^5.1.1",
     "config": "^3.3.11",
