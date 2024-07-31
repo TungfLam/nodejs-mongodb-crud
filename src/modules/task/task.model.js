@@ -26,7 +26,21 @@ var taskSchema = new database.mongoose.Schema(
             type: database.mongoose.Schema.Types.ObjectId,
             ref: 'userModel',
         }, // Người xóa nhiệm vụ (không bắt buộc).
-        tags: [{ type: String }], // Các thẻ gán cho nhiệm vụ.
+        priority: { type: String, enum: ['low', 'medium', 'high'], default: 'medium' }, // Mức độ ưu tiên.
+        estimated_time: { type: Number, required: false }, // Thời gian ước tính để hoàn thành nhiệm vụ (giờ).
+        actual_time_spent: { type: Number, required: false }, // Thời gian thực tế đã hoàn thành (giờ).
+        is_completed: { type: Boolean, default: false }, // Trạng thái hoàn thành.
+        difficulty: { type: String, enum: ['easy', 'intermediate', 'hard'], default: 'intermediate' }, // Độ khó.
+        resources: [{ type: String, required: false }], // Liên kết tài liệu tham khảo.
+        location: { type: String, enum: ['Online', 'Office', 'Home'], default: 'Online' }, // Địa điểm thực hiện.
+        attachments: [
+            {
+                file_id: { type: String, required: false },
+                file_name: { type: String, required: false },
+                file_url: { type: String, required: false },
+            }
+        ], // File đính kèm hoặc tài liệu liên quan.
+        tags: [{ type: String, required: false }], // Các thẻ gán cho nhiệm vụ.
         results: [
             {
                 type: database.mongoose.Schema.Types.ObjectId,
