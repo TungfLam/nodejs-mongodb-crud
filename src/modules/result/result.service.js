@@ -77,12 +77,13 @@ const getResultsUserTasks = (id, limit, page, sort, filter) => {
         resolve(response);
       }
       // Biến lấy danh sách result trong db nếu không có filter và sort
-      const get_result = await Result.resultModel.find({
-        task_id: id,
-        is_delete: false,
-      });
-      // .limit(limit)
-      // .skip(page * limit);
+      const get_result = await Result.resultModel
+        .find({
+          task_id: id,
+          is_delete: false,
+        })
+        .limit(limit)
+        .skip(page * limit);
       response.data = get_result;
       resolve(response);
     } catch (e) {
