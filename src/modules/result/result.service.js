@@ -46,16 +46,28 @@ const getResultsUserTasks = (id, limit, page, sort, filter) => {
       // Kiểm tra có filter được truyền vào không
       if (filter) {
         const lable = filter[0];
-        // Bỏ qua số lượng task đã được lọc và bắt đầu tìm từ user thứ page * limit
-        // Tìm kiếm theo trường filter[0] với giá trị filter[1]
-        const get_result_filter = await Result.resultModel
-          .find({
+        const [total_task, get_result_filter] = await Promise.all([
+          await Result.resultModel.countDocuments({
             task_id: id,
             is_delete: false,
             [lable]: { $regex: filter[1] },
-          })
-          .limit(limit)
-          .skip(page * limit);
+          }),
+          await Result.resultModel
+            .find({
+              task_id: id,
+              is_delete: false,
+              [lable]: { $regex: filter[1] },
+            })
+            .limit(limit)
+            .skip(page * limit),
+        ]);
+        // gán lại giá trị cho các trường trong phân trang sau khi lọc
+        response.paginationInfo.total = total_task;
+        response.paginationInfo.total_page = Math.ceil(total_task / limit);
+        response.paginationInfo.has_next_page =
+          page + 1 < Math.ceil(total_task / limit);
+        // Bỏ qua số lượng task đã được lọc và bắt đầu tìm từ user thứ page * limit
+        // Tìm kiếm theo trường filter[0] với giá trị filter[1]
         response.data = get_result_filter;
         resolve(response);
       }
