@@ -13,6 +13,7 @@ const resultSchema = new database.mongoose.Schema(
       ref: 'taskModel',
       required: true,
     },
+    name: { type: String, require: false },
     description: { type: String, required: true },
     result_image: { type: Array, required: false },
     score: { type: Number, min: 0, max: 100, required: true },

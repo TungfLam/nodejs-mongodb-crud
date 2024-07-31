@@ -20,61 +20,115 @@ async function createResultRecords(count) {
       return;
     }
 
+    // Tạo các bản ghi mới
     let records = [];
+    let bulkOps = [];
     for (let i = 0; i < count; i++) {
+      const randomUser = users[Math.floor(Math.random() * userCount)]._id;
+      const randomUpdateUser = users[Math.floor(Math.random() * userCount)]._id;
+
       const randomTask = tasks[Math.floor(Math.random() * taskCount)];
       const newResult = {
-        user_id: ['66a70b2c4785031e6235d51c', '6655f61a814c7f6072791ce0'][
-          Math.floor(Math.random() * 2)
-        ], // Thay thế bằng ObjectId của user thật nếu cần
+        user_id: randomUser, // Thay thế bằng ObjectId của user thật nếu cần
+        name: `Result ${i}`,
         task_id: randomTask._id,
         description: `Description for result ${i}`,
         score: Math.floor(Math.random() * 101), // Random score từ 0 đến 100
         outcome: ['failure', 'partial success', 'pending review', 'success'][
           Math.floor(Math.random() * 4)
         ],
+        update_by: randomUpdateUser,
+        result_image:
+          'https://res-console.cloudinary.com/dklylkfoe/thumbnails/v1/image/upload/v1718182681/bGlmZXRlay9qN2Zpc2FmbXVubGNqazV2aWZoMg==/drilldown',
         is_delete: false,
+        feedback: `Task ${randomTask.name} đã được feedback bởi ${randomUser}`,
+        delete_by: null,
       };
       records.push(newResult);
-
-      // Thêm result vào trường results của task
-      const createdResult = await resultModel.create(newResult);
-      await taskModel
-        .updateOne(
-          { _id: randomTask._id },
-          { $push: { results: createdResult._id } },
-        )
-        .exec();
-
-      console.log(`Result ${i} added to task ${randomTask._id}`);
+      console.log(`Result ${i} created`);
     }
+
+    // Chèn tất cả các bản ghi cùng một lúc
+    const createdResults = await resultModel.insertMany(records);
+
+    // Chuẩn bị các thao tác bulk update
+    createdResults.forEach((result) => {
+      bulkOps.push({
+        updateOne: {
+          filter: { _id: result.task_id },
+          update: { $push: { results: result._id } },
+        },
+      });
+    });
+
+    // Thực hiện các thao tác bulk update
+    await taskModel.bulkWrite(bulkOps);
+
     console.log(`${count} result records inserted!`);
   } catch (err) {
     console.error('Error creating result records:', err);
   }
 }
+
 /**
  * Hàm tạo bản ghi mẫu cho `taskModel`.
  * @param {number} count - Số lượng bản ghi cần tạo.
  * @returns {Promise<void>} - Một Promise khi việc chèn bản ghi hoàn tất.
  */
 async function createTaskRecords(count) {
-  let records = [];
-  for (let i = 0; i < count; i++) {
-    records.push({
-      user_id: ['66a70b2c4785031e6235d51c'], // Thay thế bằng ObjectId của user thật nếu cần
-      name: `Task ${i}`,
-      desc: `Description for task ${i}`,
-      deadline: new Date(),
-      status: Math.floor(Math.random() * 2), // Random status 0 hoặc 1
-      create_by: '66a70b2c4785031e6235d51c', // Thay thế bằng ObjectId của user thật nếu cần
-      is_delete: false,
-      results: [], // Thêm trường results để chứa các result
-    });
-    console.log(`Task ${i} created`);
+  try {
+    // Lấy tất cả các user_id
+    const users = await userModel.find({}, '_id').exec();
+    const userCount = users.length;
+
+    if (userCount === 0) {
+      console.log('No users found. Please create users before creating tasks.');
+      return;
+    }
+
+    let records = [];
+    for (let i = 0; i < count; i++) {
+      const randomUser = users[Math.floor(Math.random() * userCount)]._id;
+      const randomUpdateUser = users[Math.floor(Math.random() * userCount)]._id;
+
+      // Chọn ngẫu nhiên số lượng user được chỉ định (giả sử tối đa 5 user)
+      const assignedUserCount = Math.floor(Math.random() * 5) + 1;
+      const assignedUsers = [];
+      for (let j = 0; j < assignedUserCount; j++) {
+        const randomAssignedUser =
+          users[Math.floor(Math.random() * userCount)]._id;
+        if (!assignedUsers.includes(randomAssignedUser)) {
+          assignedUsers.push(randomAssignedUser);
+        }
+      }
+
+      const newTask = {
+        user_id: randomUser, // Thay thế bằng ObjectId của user thật nếu cần
+        name: `Task ${i}`,
+        desc: `Description for task ${i}`,
+        deadline: new Date(
+          Date.now() + Math.floor(Math.random() * 30) * 24 * 60 * 60 * 1000,
+        ), // Ngày ngẫu nhiên trong 30 ngày tới
+        status: Math.floor(Math.random() * 2), // Random status 0 hoặc 1
+        create_by: randomUser, // Thay thế bằng ObjectId của user thật nếu cần
+        is_delete: false,
+        image:
+          'https://res-console.cloudinary.com/dklylkfoe/thumbnails/v1/image/upload/v1718182681/bGlmZXRlay9qN2Zpc2FmbXVubGNqazV2aWZoMg==/drilldown',
+        delete_by: null,
+        update_by: randomUpdateUser,
+        tags: ['gia đình', 'riêng tư'],
+        results: [], // Thêm trường results để chứa các result
+        assigned_users: assignedUsers, // Danh sách các user được chỉ định
+      };
+      records.push(newTask);
+      console.log(`Task ${i} created`);
+    }
+
+    await taskModel.insertMany(records);
+    console.log(`${count} task records inserted!`);
+  } catch (err) {
+    console.error('Error creating task records:', err);
   }
-  await taskModel.insertMany(records);
-  console.log(`${count} task records inserted!`);
 }
 
 /**
@@ -85,10 +139,10 @@ async function createTaskRecords(count) {
 async function run() {
   try {
     const count = 100000; // Số bản ghi cho mỗi mô hình
-    const [createResultRecord] = await Promise.all([
-      // createTaskRecords(count),
-      createResultRecords(count),
-    ]);
+    for (i = 0; i < 10; i++) {
+      await Promise.all([createTaskRecords(count), createResultRecords(count)]);
+      console.log('còn ', 10 - i, ' lần');
+    }
   } catch (err) {
     console.error('Error running the script:', err);
   }
