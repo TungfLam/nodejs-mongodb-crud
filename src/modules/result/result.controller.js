@@ -1,6 +1,4 @@
 const resultService = require('./result.service');
-const Result = require('./result.model');
-const path = require('path');
 
 // Hàm lấy danh sách kết quả khi được submit của mỗi task
 const getResultsUserTasks = async (req, res) => {

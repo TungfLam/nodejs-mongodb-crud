@@ -158,7 +158,7 @@ const getDetailResultsUserTask = (id) => {
 
 /**
  * Lấy danh sách kết quả khi được submit của mỗi user
- * @param {string} result_id - Id của task cần sửa thông tin.
+ * @param {string} result_id - Id của result cần sửa thông tin.
  * @param {string} data - data được nhận từ req.body.
  * @returns {Object} - Dữ liệu phản hồi chứa danh sách các thuộc tính.
  * @throws {Error} - Ném ra lỗi nếu gọi API thất bại.
@@ -191,7 +191,7 @@ const updateResultsUserTask = async (result_id, data) => {
 
 /**
  * Lấy danh sách kết quả khi được submit của mỗi user
- * @param {string} result_id - Id của task cần sửa thông tin.
+ * @param {string} result_id - Id của result cần xóa file cũ.
  * @returns {Object} - Dữ liệu phản hồi chứa danh sách các thuộc tính.
  * @throws {Error} - Ném ra lỗi nếu gọi API thất bại.
  */
@@ -250,6 +250,7 @@ const uploadImage = (file) => {
     }
   });
 };
+
 /**
  * Lấy danh sách kết quả khi được submit của mỗi user
  * @param {string} id - Id của result cần xóa.
