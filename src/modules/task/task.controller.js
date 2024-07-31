@@ -14,6 +14,22 @@ var objectReturn = {
   msg: 'OK', // Tin nhắn mô tả trạng thái của phản hồi, mặc định là 'OK'.
   data: null, // Dữ liệu trả về, mặc định là null.
 };
+
+/**
+ * Kiểm tra xem dateString có thể được chuyển đổi thành một đối tượng Date hợp lệ hay không.
+ * @param {string} dateString - Chuỗi ngày tháng để kiểm tra.
+ * @return {boolean} Trả về true nếu dateString có thể được chuyển đổi thành một đối tượng Date hợp lệ, ngược lại trả về false.
+ */
+const isValidDate = (dateString) => {
+  // Tạo một đối tượng Date từ dateString
+  // Nếu chuyển đổi thành công, getTime() sẽ trả về một số nguyên khác NaN
+  // Nếu chuyển đổi không thành công, getTime() sẽ trả về NaN
+  const date = new Date(dateString);
+
+  // Kiểm tra nếu dateString có thể được chuyển đổi thành một đối tượng Date hợp lệ
+  return !isNaN(date.getTime());
+};
+
 /**
  * Lấy nhiệm vụ theo ID từ yêu cầu và trả về thông tin nhiệm vụ.
  * @return {Promise<void>} Trả về phản hồi HTTP với thông tin nhiệm vụ nếu tìm thấy, hoặc thông báo lỗi nếu không tìm thấy hoặc có lỗi xảy ra.
@@ -131,7 +147,7 @@ const createTask = async (req, res, next) => {
     const { user_id, name, desc, image, deadline, create_by, tags } = req.body;
 
     // Kiểm tra tính hợp lệ của ID người dùng
-    if (!taskService.isValidObjectId(user_id)) {
+    if (!taskService.isValidObjectId(user_id) || !taskService.isValidObjectId(create_by)) {
       return res.status(401).json({
         ...objectReturn,
         status: 0,
@@ -146,6 +162,16 @@ const createTask = async (req, res, next) => {
         ...objectReturn,
         status: 0,
         msg: 'các trường yêu cầu nhập đủ',
+        data: null,
+      });
+    }
+
+    // Kiểm tra tính hợp lệ của deadline
+    if (!isValidDate(deadline)) {
+      return res.status(401).json({
+        ...objectReturn,
+        status: 0,
+        msg: 'Hạn chót không hợp lệ',
         data: null,
       });
     }
@@ -324,7 +350,7 @@ const searchTasksByName = async (req, res, next) => {
 
     // Tạo điều kiện tìm kiếm
     const searchCondition = {
-      is_delete: false,
+      is_delete: false,// Tìm kiếm những task chưa được xóa
       name: { $regex: searchName, $options: 'i' }, // Tìm kiếm không phân biệt chữ hoa/thường
     };
 
