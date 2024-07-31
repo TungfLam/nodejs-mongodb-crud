@@ -9,9 +9,9 @@ const mongoose = require('mongoose');
  * @return {Promise<Object|null>} Một Promise sẽ trả về đối tượng người dùng nếu tìm thấy, hoặc null nếu không tìm thấy.
  */
 const findUserById = async (userId) => {
-  // Tìm người dùng theo ID sử dụng userModel.
-  // Trả về đối tượng người dùng được tìm thấy được bọc trong một Promise.
-  return await user.userModel.findById(userId);
+    // Tìm người dùng theo ID sử dụng userModel.
+    // Trả về đối tượng người dùng được tìm thấy được bọc trong một Promise.
+    return await user.userModel.findById(userId);
 };
 
 /**
@@ -22,8 +22,8 @@ const findUserById = async (userId) => {
  * @return {Promise<Object>} Một Promise sẽ trả về đối tượng người dùng đã được cập nhật sau khi lưu thay đổi.
  */
 const updatePassword = async (user, newPassword) => {
-  user.password = newPassword; // Cập nhật mật khẩu mới cho đối tượng người dùng
-  return await user.save(); // Lưu thay đổi và trả về đối tượng người dùng đã cập nhật
+    user.password = newPassword; // Cập nhật mật khẩu mới cho đối tượng người dùng
+    return await user.save(); // Lưu thay đổi và trả về đối tượng người dùng đã cập nhật
 };
 
 /**
@@ -34,7 +34,7 @@ const updatePassword = async (user, newPassword) => {
  * @return {Promise<boolean>} Một Promise sẽ trả về true nếu mật khẩu đầu vào khớp với mật khẩu đã lưu, ngược lại trả về false.
  */
 const comparePassword = async (inputPassword, storedPassword) => {
-  return await bcrypt.compare(inputPassword, storedPassword); // So sánh mật khẩu đầu vào với mật khẩu đã lưu và trả về kết quả
+    return await bcrypt.compare(inputPassword, storedPassword); // So sánh mật khẩu đầu vào với mật khẩu đã lưu và trả về kết quả
 };
 
 /**
@@ -45,9 +45,9 @@ const comparePassword = async (inputPassword, storedPassword) => {
  * @return {Promise<Object|null>} Một Promise sẽ trả về đối tượng người dùng đã được cập nhật nếu thành công, hoặc null nếu không tìm thấy người dùng.
  */
 const updateUserById = async (userId, updateFields) => {
-  return await user.userModel.findByIdAndUpdate(userId, updateFields, {
-    new: true, // Trả về đối tượng đã được cập nhật
-  });
+    return await user.userModel.findByIdAndUpdate(userId, updateFields, {
+        new: true, // Trả về đối tượng đã được cập nhật
+    });
 };
 
 /**
@@ -57,7 +57,7 @@ const updateUserById = async (userId, updateFields) => {
  * @return {Promise<Object|null>} Một Promise sẽ trả về đối tượng người dùng nếu tìm thấy, hoặc null nếu không tìm thấy.
  */
 const findUserByEmail = async (email) => {
-  return await user.userModel.findOne({ email });
+    return await user.userModel.findOne({ email });
 };
 
 /**
@@ -67,7 +67,7 @@ const findUserByEmail = async (email) => {
  * @return {Promise<string>} Một Promise sẽ trả về mật khẩu đã được mã hóa.
  */
 const hashPassword = async (password) => {
-  return await bcrypt.hash(password, 10); // Mã hóa mật khẩu với độ khó 10
+    return await bcrypt.hash(password, 10); // Mã hóa mật khẩu với độ khó 10
 };
 
 /**
@@ -77,9 +77,9 @@ const hashPassword = async (password) => {
  * @return {Promise<Object>} Một Promise sẽ trả về đối tượng người dùng đã được tạo.
  */
 const createUser = async (userData) => {
-  const newUser = new user.userModel(userData); // Tạo đối tượng người dùng mới
-  await newUser.save(); // Lưu đối tượng người dùng vào cơ sở dữ liệu
-  return newUser.toObject(); // Trả về đối tượng người dùng dưới dạng plain object
+    const newUser = new user.userModel(userData); // Tạo đối tượng người dùng mới
+    await newUser.save(); // Lưu đối tượng người dùng vào cơ sở dữ liệu
+    return newUser.toObject(); // Trả về đối tượng người dùng dưới dạng plain object
 };
 
 /**
@@ -89,16 +89,16 @@ const createUser = async (userData) => {
  * @return {boolean} Trả về true nếu ID là ObjectId hợp lệ, ngược lại trả về false.
  */
 const isValidObjectId = (id) => {
-  return mongoose.Types.ObjectId.isValid(id); // Kiểm tra tính hợp lệ của ObjectId
+    return mongoose.Types.ObjectId.isValid(id); // Kiểm tra tính hợp lệ của ObjectId
 };
 
 module.exports = {
-  findUserByEmail,
-  comparePassword,
-  findUserById,
-  hashPassword,
-  updatePassword,
-  updateUserById,
-  createUser,
-  isValidObjectId,
+    findUserByEmail,
+    comparePassword,
+    findUserById,
+    hashPassword,
+    updatePassword,
+    updateUserById,
+    createUser,
+    isValidObjectId,
 };

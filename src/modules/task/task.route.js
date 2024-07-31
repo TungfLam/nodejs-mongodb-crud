@@ -17,9 +17,9 @@ router.get('/:Id', api_tasks.getTaskById);
 
 // Route để cập nhật nhiệm vụ theo taskId, sử dụng middleware upload để xử lý ảnh
 router.put(
-  '/updateTasks/:taskId',
-  // upload.single('image'),
-  api_tasks.updateTaskById,
+    '/updateTasks/:taskId',
+    // upload.single('image'),
+    api_tasks.updateTaskById,
 );
 
 // Route để xóa nhiệm vụ theo taskId
