@@ -9,14 +9,7 @@ const getResultsUserTasks = async (req, res) => {
     if (!task_id) {
       throw new Error('Không tìm thấy id của task!');
     }
-    // Kiểm tra limit task tồn tại hay không
-    if (!limit) {
-      throw new Error('Không tìm thấy id của limit!');
-    }
-    // Kiểm tra page task tồn tại hay không
-    if (!page) {
-      throw new Error('Không tìm thấy id của page!');
-    }
+
     // Biến nhận kết quả trả về từ resultService
     const response = await resultService.getResultsUserTasks(
       task_id,
