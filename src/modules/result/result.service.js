@@ -35,9 +35,13 @@ const getResultsUserTasks = (id, limit, page, sort, filter) => {
         status: 'OK',
         message: 'SUCCESS',
         data: {},
-        total: total_task,
-        page_current: page + 1,
-        total_page: Math.ceil(total_task / limit),
+        paginationInfo: {
+          total: total_task,
+          page_current: page + 1,
+          total_page: Math.ceil(total_task / limit),
+          hasNextPage: page + 1 < Math.ceil(total_task / limit),
+          hasPrevPage: page + 1 > 1,
+        },
       };
       // Kiểm tra có filter được truyền vào không
       if (filter) {
