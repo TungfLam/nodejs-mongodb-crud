@@ -59,6 +59,13 @@ const createResultsUserTask = async (req, res) => {
         message: 'score phải là số',
       });
     }
+    // Kiểm tra socre có trong khoảng quy định không
+    if (typeof Number(score) > 0 && Number(score) < 100) {
+      return res.status(400).json({
+        status: 'ERR',
+        message: 'score phải lớn hơn 0 và nhỏ hơn 100',
+      });
+    }
     // Kiểm tra outcome có thuộc phần tử trong mẫu cho trước không
     if (!outcome_exam.includes(outcome)) {
       return res.status(400).json({
