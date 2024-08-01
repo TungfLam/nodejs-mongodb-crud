@@ -4,7 +4,8 @@ const resultService = require('./result.service');
 const getResultsUserTasks = async (req, res) => {
     try {
         const task_id = req.params.task_id;
-        const { limit, page, sort, filter } = req.query;
+        const { limit, page, sort, ...filters } = req.query;
+
         // Kiểm tra id task tồn tại hay không
         if (!task_id) {
             throw new Error('Không tìm thấy id của task!');
@@ -16,12 +17,12 @@ const getResultsUserTasks = async (req, res) => {
             Number(limit) || 8,
             Number(page) || 0,
             sort,
-            filter,
+            filters,
         );
         return res.status(200).json(response);
     } catch (e) {
         return res.status(400).json({
-            message: e,
+            message: e.message || e,
         });
     }
 };

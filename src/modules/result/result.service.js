@@ -20,14 +20,14 @@ cloudinary.config({
  * @param {number} limit - Số lượng bản ghi trên mỗi trang.
  * @param {number} page - Số trang hiện tại.
  * @param {Array} sort - Mảng chứa thông tin sắp xếp.
- * @param {Array} filter - Mảng chứa thông tin lọc.
+ * @param {Object} filters - Đối tượng chứa các bộ lọc.
  * @returns {Object} - Dữ liệu phản hồi chứa danh sách các thuộc tính.
  * @throws {Error} - Ném ra lỗi nếu gọi API thất bại.
  */
-const getResultsUserTasks = (id, limit, page, sort, filter) => {
+const getResultsUserTasks = (id, limit, page, sort, filters) => {
     return new Promise(async (resolve, reject) => {
         try {
-            // Kiểm tra id user có tồn tại không
+            // Kiểm tra id task có tồn tại không
             if (!id) {
                 throw new Error('Không nhận được id Task!');
             }
@@ -38,10 +38,9 @@ const getResultsUserTasks = (id, limit, page, sort, filter) => {
                 is_delete: false,
             };
 
-            // Kiểm tra và thêm điều kiện filter vào query
-            if (filter) {
-                const label = filter[0];
-                const value = filter[1];
+            // Thêm các điều kiện filter vào query
+            for (const label in filters) {
+                const value = filters[label];
 
                 if (label === 'date') {
                     query.created_at = {
@@ -76,7 +75,7 @@ const getResultsUserTasks = (id, limit, page, sort, filter) => {
                             .toDate(),
                     };
                 } else {
-                    query[label] = { $regex: value };
+                    query[label] = { $regex: value, $options: 'i' };
                 }
             }
 
@@ -97,8 +96,9 @@ const getResultsUserTasks = (id, limit, page, sort, filter) => {
 
             // Kiểm tra có sort được truyền vào không
             if (sort) {
+                const [sortOrder, sortField] = sort.split(',');
                 const object_sort = {};
-                object_sort[sort[1]] = Number(sort[0]);
+                object_sort[sortField] = Number(sortOrder);
                 const get_result_sort = await Result.resultModel
                     .find(query)
                     .limit(limit)
