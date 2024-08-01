@@ -5,7 +5,7 @@ const mongoose = require('mongoose');
 
 const USER_ID = new mongoose.Types.ObjectId('6655f61a814c7f6072791ce0');
 const TOTAL_TASKS = 1000000;
-const BATCH_SIZE = 1000;
+const BATCH_SIZE = 2000;
 
 // Xử lý batch:
 // Xử lý dữ liệu theo batch giúp kiểm soát việc sử dụng bộ nhớ, cho phép xử lý lượng dữ liệu lớn hơn mà không gây quá tải hệ thống.
@@ -30,7 +30,8 @@ const generateDataInsertBulk = async (req, res, next) => {
             // Tạo và thêm dữ liệu cho mỗi batch
             for (let j = 0; j < BATCH_SIZE && i + j < TOTAL_TASKS; j++) {
                 const taskId = new mongoose.Types.ObjectId();
-                const resultCount = Math.floor(Math.random() * 5) + 1;
+                // const resultCount = Math.floor(Math.random() * 2) + 1;
+                const resultCount = 1;
                 const results = []; // Mảng chứa các objectId của result cho task hiện tại
 
                 // Tạo các document result ngẫu nhiên
@@ -146,7 +147,7 @@ const generateDataInsertMany = async (req, res, next) => {
 
             for (let j = 0; j < BATCH_SIZE && i + j < TOTAL_TASKS; j++) {
                 const taskId = new mongoose.Types.ObjectId();
-                const resultCount = Math.floor(Math.random() * 5) + 1; // 1-5 results
+                const resultCount = Math.floor(Math.random() * 2) + 1; // 1-5 results
                 const results = [];
 
                 for (let k = 0; k < resultCount; k++) {
