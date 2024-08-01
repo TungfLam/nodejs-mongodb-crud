@@ -15,7 +15,7 @@ const getResultsUserTasks = async (req, res) => {
         const response = await resultService.getResultsUserTasks(
             task_id,
             Number(limit) || 10,
-            Number(page) || 0,
+            Number(page) || 1,
             query,
         );
         return res.status(200).json(response);
