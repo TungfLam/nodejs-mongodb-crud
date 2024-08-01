@@ -85,7 +85,7 @@ const getResultsUserTasks = (id, limit, page, query) => {
                     default:
                         if (key.startsWith('sort_')) {
                             const sortField = key.slice(5);
-                            sortQuery[sortField] = Number(value);
+                            sortQuery[sortField] = Number(value) || 1;
                         } else {
                             filterQuery[key] = { $regex: value, $options: 'i' };
                         }
