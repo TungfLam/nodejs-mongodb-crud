@@ -110,11 +110,6 @@ const getResultsUserTasks = (id, limit, page, query) => {
             };
 
             // Biến lấy danh sách result trong db nếu có hoặc không có sort
-            // const get_result = await Result.resultModel
-            //     .find({ task_id: id }, '_id')
-            //     .limit(limit)
-            //     .skip(page * limit);
-            // console.log(get_result);
             const get_result = await Result.resultModel
                 .find(filterQuery)
                 .limit(limit)
