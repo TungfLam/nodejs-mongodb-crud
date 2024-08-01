@@ -361,14 +361,12 @@ const deleteTaskById = async (req, res, next) => {
  */
 const searchTasksByName = async (req, res, next) => {
     try {
+        // lấy tham số từ query
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 12;
         const searchName = req.query.name || '';
         const startDate = req.query.startDate ? new Date(req.query.startDate) : null;
         const endDate = req.query.endDate ? new Date(req.query.endDate) : null;
-
-
-        // ca9uwbouyqberv0ucqbe
         const status = req.query.status ? parseInt(req.query.status) : null;
         const priority = req.query.priority || null;
         const isCompleted = req.query.is_completed !== undefined ? req.query.is_completed === 'true' : null;
@@ -389,7 +387,6 @@ const searchTasksByName = async (req, res, next) => {
             };
         }
 
-        // afvjhqo3rnvy3087rv gquhpwieo ecq-n90ruvgh
         if (status !== null) searchCondition.status = status;
         if (priority) searchCondition.priority = priority;
         if (isCompleted !== null) searchCondition.is_completed = isCompleted;
