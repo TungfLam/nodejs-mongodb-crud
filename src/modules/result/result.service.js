@@ -30,7 +30,6 @@ const getResultsUserTasks = (id, limit, page, query) => {
             if (!id) {
                 throw new Error('Không nhận được id Task!');
             }
-
             // Tạo điều kiện query cơ bản
             const filterQuery = {
                 task_id: id,
@@ -103,10 +102,10 @@ const getResultsUserTasks = (id, limit, page, query) => {
                 data: {},
                 paginationInfo: {
                     total: total_task,
-                    page_current: page + 1,
+                    page_current: page,
                     total_page: Math.ceil(total_task / limit),
-                    has_next_page: page + 1 < Math.ceil(total_task / limit),
-                    has_prev_page: page + 1 > 1,
+                    has_next_page: page < Math.ceil(total_task / limit),
+                    has_prev_page: page > 1,
                 },
             };
 
@@ -114,9 +113,9 @@ const getResultsUserTasks = (id, limit, page, query) => {
             const get_result = await Result.resultModel
                 .find(filterQuery)
                 .limit(limit)
-                .skip(page * limit)
+                .skip((page - 1) * limit)
                 .sort(sortQuery)
-                .select('-__v -is_delete');
+                .select('-__v');
 
             response.data = get_result;
             resolve(response);
