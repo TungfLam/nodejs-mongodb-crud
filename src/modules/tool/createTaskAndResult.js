@@ -24,7 +24,8 @@ const generateDataInsertBulk = async (req, res, next) => {
         for (let i = 0; i < TOTAL_TASKS; i += BATCH_SIZE) {
             // Khởi tạo bulk operation cho hai bảng task và result
             const taskBulk = taskModel.collection.initializeUnorderedBulkOp();
-            const resultBulk = resultModel.collection.initializeUnorderedBulkOp();
+            const resultBulk =
+                resultModel.collection.initializeUnorderedBulkOp();
 
             // Tạo và thêm dữ liệu cho mỗi batch
             for (let j = 0; j < BATCH_SIZE && i + j < TOTAL_TASKS; j++) {
@@ -59,9 +60,13 @@ const generateDataInsertBulk = async (req, res, next) => {
                                 file_url: faker.internet.url(),
                             },
                         ],
-                        approval_status: ['approved', 'rejected', 'pending'][Math.floor(Math.random() * 3)], // Trạng thái phê duyệt ngẫu nhiên
+                        approval_status: ['approved', 'rejected', 'pending'][
+                            Math.floor(Math.random() * 3)
+                        ], // Trạng thái phê duyệt ngẫu nhiên
                         tags: [faker.lorem.word(), faker.lorem.word()],
-                        effort_level: ['low', 'medium', 'high'][Math.floor(Math.random() * 3)], // Mức độ nỗ lực ngẫu nhiên
+                        effort_level: ['low', 'medium', 'high'][
+                            Math.floor(Math.random() * 3)
+                        ], // Mức độ nỗ lực ngẫu nhiên
                         is_public: Math.random() < 0.5, // Trạng thái công khai ngẫu nhiên
                     });
                     results.push(resultId); // Thêm objectId của result vào mảng
@@ -80,16 +85,21 @@ const generateDataInsertBulk = async (req, res, next) => {
                     update_by: USER_ID,
                     is_delete: false,
                     delete_by: USER_ID,
-                    priority: ['low', 'medium', 'high'][Math.floor(Math.random() * 3)], // Độ ưu tiên ngẫu nhiên
+                    priority: ['low', 'medium', 'high'][
+                        Math.floor(Math.random() * 3)
+                    ], // Độ ưu tiên ngẫu nhiên
                     estimated_time: parseFloat((Math.random() * 10).toFixed(1)), // Thời gian ước tính ngẫu nhiên (từ 0 đến 10 giờ)
-                    actual_time_spent: parseFloat((Math.random() * 10).toFixed(1)), // Thời gian thực tế ngẫu nhiên (từ 0 đến 10 giờ)
+                    actual_time_spent: parseFloat(
+                        (Math.random() * 10).toFixed(1),
+                    ), // Thời gian thực tế ngẫu nhiên (từ 0 đến 10 giờ)
                     is_completed: Math.random() < 0.5, // Trạng thái hoàn thành ngẫu nhiên
-                    difficulty: ['easy', 'intermediate', 'hard'][Math.floor(Math.random() * 3)], // Độ khó ngẫu nhiên
-                    resources: [
-                        faker.internet.url(),
-                        faker.internet.url(),
-                    ], // Các tài liệu tham khảo ngẫu nhiên
-                    location: ['Online', 'Office', 'Home'][Math.floor(Math.random() * 3)], // Địa điểm ngẫu nhiên
+                    difficulty: ['easy', 'intermediate', 'hard'][
+                        Math.floor(Math.random() * 3)
+                    ], // Độ khó ngẫu nhiên
+                    resources: [faker.internet.url(), faker.internet.url()], // Các tài liệu tham khảo ngẫu nhiên
+                    location: ['Online', 'Office', 'Home'][
+                        Math.floor(Math.random() * 3)
+                    ], // Địa điểm ngẫu nhiên
                     attachments: [
                         {
                             file_id: new mongoose.Types.ObjectId(),
@@ -164,9 +174,13 @@ const generateDataInsertMany = async (req, res, next) => {
                                 file_url: faker.internet.url(),
                             },
                         ],
-                        approval_status: ['approved', 'rejected', 'pending'][Math.floor(Math.random() * 3)], // Trạng thái phê duyệt ngẫu nhiên
+                        approval_status: ['approved', 'rejected', 'pending'][
+                            Math.floor(Math.random() * 3)
+                        ], // Trạng thái phê duyệt ngẫu nhiên
                         tags: [faker.lorem.word(), faker.lorem.word()],
-                        effort_level: ['low', 'medium', 'high'][Math.floor(Math.random() * 3)], // Mức độ nỗ lực ngẫu nhiên
+                        effort_level: ['low', 'medium', 'high'][
+                            Math.floor(Math.random() * 3)
+                        ], // Mức độ nỗ lực ngẫu nhiên
                         is_public: Math.random() < 0.5, // Trạng thái công khai ngẫu nhiên
                     });
                     results.push(resultId);
@@ -184,16 +198,21 @@ const generateDataInsertMany = async (req, res, next) => {
                     update_by: USER_ID,
                     is_delete: false,
                     delete_by: USER_ID,
-                    priority: ['low', 'medium', 'high'][Math.floor(Math.random() * 3)], // Độ ưu tiên ngẫu nhiên
+                    priority: ['low', 'medium', 'high'][
+                        Math.floor(Math.random() * 3)
+                    ], // Độ ưu tiên ngẫu nhiên
                     estimated_time: parseFloat((Math.random() * 10).toFixed(1)), // Thời gian ước tính ngẫu nhiên (từ 0 đến 10 giờ)
-                    actual_time_spent: parseFloat((Math.random() * 10).toFixed(1)), // Thời gian thực tế ngẫu nhiên (từ 0 đến 10 giờ)
+                    actual_time_spent: parseFloat(
+                        (Math.random() * 10).toFixed(1),
+                    ), // Thời gian thực tế ngẫu nhiên (từ 0 đến 10 giờ)
                     is_completed: Math.random() < 0.5, // Trạng thái hoàn thành ngẫu nhiên
-                    difficulty: ['easy', 'intermediate', 'hard'][Math.floor(Math.random() * 3)], // Độ khó ngẫu nhiên
-                    resources: [
-                        faker.internet.url(),
-                        faker.internet.url(),
-                    ], // Các tài liệu tham khảo ngẫu nhiên
-                    location: ['Online', 'Office', 'Home'][Math.floor(Math.random() * 3)], // Địa điểm ngẫu nhiên
+                    difficulty: ['easy', 'intermediate', 'hard'][
+                        Math.floor(Math.random() * 3)
+                    ], // Độ khó ngẫu nhiên
+                    resources: [faker.internet.url(), faker.internet.url()], // Các tài liệu tham khảo ngẫu nhiên
+                    location: ['Online', 'Office', 'Home'][
+                        Math.floor(Math.random() * 3)
+                    ], // Địa điểm ngẫu nhiên
                     attachments: [
                         {
                             file_id: new mongoose.Types.ObjectId(),
