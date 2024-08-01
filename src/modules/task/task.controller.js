@@ -133,12 +133,14 @@ const getTasksByUserId = async (req, res, next) => {
         if (location) searchCondition.location = location;
 
         // Tính tổng số nhiệm vụ và số trang cần thiết cho phân trang
-        const totalItems = await taskService.countTasksByUserId(userId);
+        const totalItems = await taskService.countTasksByUserId(searchCondition);
         const totalPages = Math.ceil(totalItems / limit);
         const skip = (page - 1) * limit;
 
         // Tìm nhiệm vụ của người dùng với phân trang
         const tasks = await taskService.findTasks(searchCondition, skip, limit);
+        // const totalPages = Math.ceil(tasks / limit);
+        // const skip = (page - 1) * limit;
 
         // Kiểm tra xem có nhiệm vụ nào không
         if (tasks.length <= 0) {

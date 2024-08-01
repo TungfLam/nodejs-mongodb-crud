@@ -114,11 +114,10 @@ const findTasksByUserId = async (userId, skip, limit) => {
  * @param {string} userId - ID của người dùng để đếm số lượng nhiệm vụ.
  * @return {Promise<number>} Một Promise sẽ trả về số lượng nhiệm vụ thỏa mãn điều kiện.
  */
-const countTasksByUserId = async (userId) => {
-    return await task.taskModel.countDocuments({
-        user_id: userId, // Lọc nhiệm vụ theo ID người dùng.
-        is_delete: false, // Lọc các nhiệm vụ chưa bị xóa.
-    });
+const countTasksByUserId = async (searchCondition, userId) => {
+    return await task.taskModel.countDocuments(
+        searchCondition
+    );
 };
 
 /**
