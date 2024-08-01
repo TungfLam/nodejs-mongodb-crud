@@ -5,13 +5,13 @@ const timestampPlugin = (schema) => {
     // Thêm tùy chỉnh toJSON
     schema.set('toJSON', {
         transform: (doc, ret) => {
-            if (ret.createdAt) {
-                ret.createdAt = moment(ret.createdAt).format(
+            if (ret.created_at) {
+                ret.created_at = moment(ret.created_at).format(
                     'YYYY-MM-DD HH:mm:ss',
                 );
             }
-            if (ret.updatedAt) {
-                ret.updatedAt = moment(ret.updatedAt).format(
+            if (ret.updated_at) {
+                ret.updated_at = moment(ret.updated_at).format(
                     'YYYY-MM-DD HH:mm:ss',
                 );
             }
@@ -19,20 +19,20 @@ const timestampPlugin = (schema) => {
         },
     });
 
-    // Middleware để cập nhật updatedAt trước khi lưu
+    // Middleware để cập nhật updated_at trước khi lưu
     schema.pre('save', function (next) {
         if (this.isNew) {
-            this.createdAt = moment().format('YYYY-MM-DD HH:mm:ss');
+            this.created_at = moment().format('YYYY-MM-DD HH:mm:ss');
         }
-        this.updatedAt = moment().format('YYYY-MM-DD HH:mm:ss');
+        this.updated_at = moment().format('YYYY-MM-DD HH:mm:ss');
         next();
     });
     //khi update giữ nguyên giá trị createAt
     const updateMiddleware = function (next) {
-        if (this._update.createdAt) {
-            delete this._update.createdAt;
+        if (this._update.created_at) {
+            delete this._update.created_at;
         }
-        this._update.updatedAt = moment().format('YYYY-MM-DD HH:mm:ss');
+        this._update.updated_at = moment().format('YYYY-MM-DD HH:mm:ss');
         next();
     };
 
