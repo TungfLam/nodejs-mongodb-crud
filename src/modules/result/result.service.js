@@ -19,12 +19,11 @@ cloudinary.config({
  * @param {string} id - Id của task cần lấy danh sách kết quả.
  * @param {number} limit - Số lượng bản ghi trên mỗi trang.
  * @param {number} page - Số trang hiện tại.
- * @param {Array} sort - Mảng chứa thông tin sắp xếp.
- * @param {Object} filters - Đối tượng chứa các bộ lọc.
+ * @param {Object} query - Đối tượng chứa các bộ lọc và sắp xếp.
  * @returns {Object} - Dữ liệu phản hồi chứa danh sách các thuộc tính.
  * @throws {Error} - Ném ra lỗi nếu gọi API thất bại.
  */
-const getResultsUserTasks = (id, limit, page, sort, filters) => {
+const getResultsUserTasks = (id, limit, page, query) => {
     return new Promise(async (resolve, reject) => {
         try {
             // Kiểm tra id task có tồn tại không
@@ -33,54 +32,71 @@ const getResultsUserTasks = (id, limit, page, sort, filters) => {
             }
 
             // Tạo điều kiện query cơ bản
-            const query = {
+            const filterQuery = {
                 task_id: id,
                 is_delete: false,
             };
+            const sortQuery = {};
 
-            // Thêm các điều kiện filter vào query
-            for (const label in filters) {
-                const value = filters[label];
+            // Phân loại các điều kiện lọc và sắp xếp
+            for (const key in query) {
+                const value = query[key];
 
-                if (label === 'date') {
-                    query.created_at = {
-                        $gte: moment(value, 'YYYY-MM-DD')
-                            .startOf('day')
-                            .toDate(),
-                        $lt: moment(value, 'YYYY-MM-DD').endOf('day').toDate(),
-                    };
-                } else if (label === 'month') {
-                    query.created_at = {
-                        $gte: moment(value, 'YYYY-MM')
-                            .startOf('month')
-                            .toDate(),
-                        $lt: moment(value, 'YYYY-MM').endOf('month').toDate(),
-                    };
-                } else if (label === 'year') {
-                    query.created_at = {
-                        $gte: moment(value, 'YYYY').startOf('year').toDate(),
-                        $lt: moment(value, 'YYYY').endOf('year').toDate(),
-                    };
-                } else if (
-                    label === 'date_range' &&
-                    Array.isArray(value) &&
-                    value.length === 2
-                ) {
-                    query.created_at = {
-                        $gte: moment(value[0], 'YYYY-MM-DD')
-                            .startOf('day')
-                            .toDate(),
-                        $lt: moment(value[1], 'YYYY-MM-DD')
-                            .endOf('day')
-                            .toDate(),
-                    };
-                } else {
-                    query[label] = { $regex: value, $options: 'i' };
+                switch (key) {
+                    case 'date':
+                        filterQuery.created_at = {
+                            $gte: moment(value, 'YYYY-MM-DD')
+                                .startOf('day')
+                                .toDate(),
+                            $lt: moment(value, 'YYYY-MM-DD')
+                                .endOf('day')
+                                .toDate(),
+                        };
+                        break;
+                    case 'month':
+                        filterQuery.created_at = {
+                            $gte: moment(value, 'YYYY-MM')
+                                .startOf('month')
+                                .toDate(),
+                            $lt: moment(value, 'YYYY-MM')
+                                .endOf('month')
+                                .toDate(),
+                        };
+                        break;
+                    case 'year':
+                        filterQuery.created_at = {
+                            $gte: moment(value, 'YYYY')
+                                .startOf('year')
+                                .toDate(),
+                            $lt: moment(value, 'YYYY').endOf('year').toDate(),
+                        };
+                        break;
+                    case 'date_range':
+                        if (Array.isArray(value) && value.length === 2) {
+                            filterQuery.created_at = {
+                                $gte: moment(value[0], 'YYYY-MM-DD')
+                                    .startOf('day')
+                                    .toDate(),
+                                $lt: moment(value[1], 'YYYY-MM-DD')
+                                    .endOf('day')
+                                    .toDate(),
+                            };
+                        }
+                        break;
+                    default:
+                        if (key.startsWith('sort_')) {
+                            const sortField = key.slice(5);
+                            sortQuery[sortField] = Number(value);
+                        } else {
+                            filterQuery[key] = { $regex: value, $options: 'i' };
+                        }
+                        break;
                 }
             }
 
             // Lấy tổng số bản ghi trong bảng Result
-            const total_task = await Result.resultModel.countDocuments(query);
+            const total_task =
+                await Result.resultModel.countDocuments(filterQuery);
             const response = {
                 status: 'OK',
                 message: 'SUCCESS',
@@ -94,27 +110,16 @@ const getResultsUserTasks = (id, limit, page, sort, filters) => {
                 },
             };
 
-            // Kiểm tra có sort được truyền vào không
-            if (sort) {
-                const [sortOrder, sortField] = sort.split(',');
-                const object_sort = {};
-                object_sort[sortField] = Number(sortOrder);
-                const get_result_sort = await Result.resultModel
-                    .find(query)
-                    .limit(limit)
-                    .skip(page * limit)
-                    .sort(object_sort);
-                response.data = get_result_sort;
-                resolve(response);
-            } else {
-                // Biến lấy danh sách result trong db nếu không có filter và sort
-                const get_result = await Result.resultModel
-                    .find(query)
-                    .limit(limit)
-                    .skip(page * limit);
-                response.data = get_result;
-                resolve(response);
-            }
+            // Biến lấy danh sách result trong db nếu có hoặc không có sort
+            const get_result = await Result.resultModel
+                .find(filterQuery)
+                .limit(limit)
+                .skip(page * limit)
+                .sort(sortQuery)
+                .select('-__v -is_delete');
+
+            response.data = get_result;
+            resolve(response);
         } catch (e) {
             reject(e);
         }
