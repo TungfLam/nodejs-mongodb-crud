@@ -46,6 +46,7 @@ const generateDataInsertBulk = async (req, res, next) => {
                         result_image: [faker.image.url(), faker.image.url()],
                         score: Math.floor(Math.random() * 101),
                         feedback: faker.lorem.sentence(),
+                        is_delete: false,
                         outcome: [
                             'failure',
                             'partial success',
