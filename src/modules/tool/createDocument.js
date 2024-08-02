@@ -12,16 +12,6 @@ const { userModel } = require('../user/user.model'); // Điều chỉnh đườn
  */
 async function createResultRecords(tasks, userCount, users) {
     try {
-        const tasks = await taskModel.find({}, '_id').exec();
-        const taskCount = tasks.length;
-
-        if (taskCount === 0) {
-            console.log(
-                'No tasks found. Please create tasks before creating results.',
-            );
-            return;
-        }
-        // Tạo các bản ghi mới
         let records = [];
         let bulkOps = [];
         tasks.forEach((task) => {
@@ -31,13 +21,14 @@ async function createResultRecords(tasks, userCount, users) {
                     users[Math.floor(Math.random() * userCount)]._id;
                 const randomUpdateUser =
                     users[Math.floor(Math.random() * userCount)]._id;
+                const randomReviewer =
+                    users[Math.floor(Math.random() * userCount)]._id;
 
                 const newResult = {
-                    user_id: randomUser, // Thay thế bằng ObjectId của user thật nếu cần
-                    name: `Result for Task ${task._id} - ${i}`,
+                    user_id: randomUser,
                     task_id: task._id,
                     description: `Description for result ${i}`,
-                    score: Math.floor(Math.random() * 101), // Random score từ 0 đến 100
+                    score: Math.floor(Math.random() * 101),
                     outcome: [
                         'failure',
                         'partial success',
@@ -45,42 +36,48 @@ async function createResultRecords(tasks, userCount, users) {
                         'success',
                     ][Math.floor(Math.random() * 4)],
                     update_by: randomUpdateUser,
-                    result_image:
-                        'https://res-console.cloudinary.com/dklylkfoe/thumbnails/v1/image/upload/v1718182681/bGlmZXRlay9qN2Zpc2FmbXVubGNqazV2aWZoMg==/drilldown',
+                    result_image: 'https://example.com/image.jpg',
                     is_delete: false,
                     feedback: `Task ${task._id} đã được feedback bởi ${randomUser}`,
                     delete_by: null,
-                    duration: { type: Number, required: false }, // Thời gian hoàn thành công việc (tính bằng giờ).
-                    notes: { type: String, required: false }, // Ghi chú thêm từ người submit hoặc người đánh giá.
+                    duration: Math.floor(Math.random() * 24),
+                    notes: `Notes for result ${i}`,
                     attachments: [
                         {
-                            file_id: { type: String, required: false },
-                            file_name: { type: String, required: false },
-                            file_url: { type: String, required: false },
+                            file_id: `file_id_${i}`,
+                            file_name: `file_name_${i}`,
+                            file_url: 'https://example.com/file_url',
                         },
-                    ], // Các file đính kèm liên quan đến kết quả.
-                    approval_status: {
-                        type: String,
-                        enum: ['approved', 'rejected', 'pending'],
-                        default: 'pending',
-                    }, // Trạng thái phê duyệt của kết quả.
-                    tags: [{ type: String, required: false }], // Các thẻ liên quan đến kết quả.
-                    effort_level: {
-                        type: String,
-                        enum: ['low', 'medium', 'high'],
-                        default: 'medium',
-                    }, // Mức độ nỗ lực cần thiết.
-                    is_public: { type: Boolean, default: false }, // Trạng thái công khai của kết quả.
+                    ],
+                    approval_status: ['approved', 'rejected', 'pending'][
+                        Math.floor(Math.random() * 3)
+                    ],
+                    tags: [`tag_${i}`],
+                    effort_level: ['low', 'medium', 'high'][
+                        Math.floor(Math.random() * 3)
+                    ],
+                    is_public: Math.random() < 0.5,
+
+                    // Dữ liệu ngẫu nhiên cho các trường mới
+                    reviewer_id: randomReviewer,
+                    review_date: new Date(),
+                    comments: `Comments for result ${i}`,
+                    improvement_suggestions: `Suggestions for result ${i}`,
+                    related_tasks: [task._id],
+                    next_steps: `Next steps for result ${i}`,
+                    performance_level: ['low', 'medium', 'high'][
+                        Math.floor(Math.random() * 3)
+                    ],
+                    created_by: randomUser,
+                    updated_by: randomUpdateUser,
+                    deleted_by: null,
                 };
                 records.push(newResult);
                 console.log(`result ${i} created`);
             }
         });
 
-        // Chèn tất cả các bản ghi cùng một lúc
         const createdResults = await resultModel.insertMany(records);
-
-        // Chuẩn bị các thao tác bulk update
         createdResults.forEach((result) => {
             bulkOps.push({
                 updateOne: {
@@ -90,9 +87,7 @@ async function createResultRecords(tasks, userCount, users) {
             });
         });
 
-        // Thực hiện các thao tác bulk update
         await taskModel.bulkWrite(bulkOps);
-
         console.log(`${createdResults.length} result records inserted!`);
     } catch (err) {
         console.error('Error creating result records:', err);
@@ -106,7 +101,6 @@ async function createResultRecords(tasks, userCount, users) {
  */
 async function createTaskRecords(count) {
     try {
-        // Lấy tất cả các user_id
         const users = await userModel.find({}, '_id').exec();
         const userCount = users.length;
 
@@ -122,42 +116,57 @@ async function createTaskRecords(count) {
             const randomUser = users[Math.floor(Math.random() * userCount)]._id;
             const randomUpdateUser =
                 users[Math.floor(Math.random() * userCount)]._id;
-
-            // Chọn ngẫu nhiên số lượng user được chỉ định (giả sử tối đa 5 user)
-            const assignedUserCount = Math.floor(Math.random() * 5) + 1;
-            const assignedUsers = [];
-            for (let j = 0; j < assignedUserCount; j++) {
-                const randomAssignedUser =
-                    users[Math.floor(Math.random() * userCount)]._id;
-                if (!assignedUsers.includes(randomAssignedUser)) {
-                    assignedUsers.push(randomAssignedUser);
-                }
-            }
-            // Tạo ngày bắt đầu và kết thúc ngẫu nhiên trong vòng một năm
-            const created_at = new Date(
+            const randomReviewer =
+                users[Math.floor(Math.random() * userCount)]._id;
+            const start_date = new Date(
                 Date.now() -
                     Math.floor(Math.random() * 365) * 24 * 60 * 60 * 1000,
             );
-            const deadline = new Date(
-                created_at.getTime() +
+            const end_date = new Date(
+                start_date.getTime() +
                     Math.floor(Math.random() * 30) * 24 * 60 * 60 * 1000,
             );
 
             const newTask = {
-                user_id: randomUser, // Thay thế bằng ObjectId của user thật nếu cần
+                user_id: randomUser,
                 name: `Task ${i}`,
                 desc: `Description for task ${i}`,
-                created_at: created_at,
-                deadline: deadline,
-                status: Math.floor(Math.random() * 2), // Random status 0 hoặc 1
-                create_by: randomUser, // Thay thế bằng ObjectId của user thật nếu cần
+                start_date: start_date,
+                end_date: end_date,
+                deadline: new Date(
+                    start_date.getTime() +
+                        Math.floor(Math.random() * 30) * 24 * 60 * 60 * 1000,
+                ),
+                status: Math.floor(Math.random() * 2),
+                create_by: randomUser,
                 is_delete: false,
-                image: 'https://res-console.cloudinary.com/dklylkfoe/thumbnails/v1/image/upload/v1718182681/bGlmZXRlay9qN2Zpc2FmbXVubGNqazV2aWZoMg==/drilldown',
+                image: 'https://example.com/image.jpg',
                 delete_by: null,
                 update_by: randomUpdateUser,
-                tags: ['gia đình', 'riêng tư'],
-                results: [], // Thêm trường results để chứa các result
-                assigned_users: assignedUsers, // Danh sách các user được chỉ định
+                tags: ['tag1', 'tag2'],
+                results: [],
+                assigned_users: users
+                    .slice(0, Math.floor(Math.random() * userCount))
+                    .map((user) => user._id),
+
+                // Dữ liệu ngẫu nhiên cho các trường mới
+                review_date: new Date(),
+                reviewed_by: randomReviewer,
+                review_notes: `Review notes for task ${i}`,
+                follow_up_tasks: [],
+                associated_projects: [],
+                task_type: ['research', 'development', 'testing', 'deployment'][
+                    Math.floor(Math.random() * 4)
+                ],
+                complexity: ['low', 'medium', 'high'][
+                    Math.floor(Math.random() * 3)
+                ],
+                milestones: [
+                    `Milestone 1 for task ${i}`,
+                    `Milestone 2 for task ${i}`,
+                ],
+                task_url: `https://example.com/task/${i}`,
+                is_urgent: Math.random() < 0.5,
             };
             records.push(newTask);
             console.log(`Task ${i} created`);
@@ -166,7 +175,6 @@ async function createTaskRecords(count) {
         const createdTasks = await taskModel.insertMany(records);
         console.log(`${count} task records inserted!`);
 
-        // Gọi hàm tạo result records sau khi tạo task records
         await createResultRecords(createdTasks, userCount, users);
     } catch (err) {
         console.error('Error creating task records:', err);
@@ -180,10 +188,10 @@ async function createTaskRecords(count) {
  */
 async function run() {
     try {
-        const count = 200000; // Số bản ghi cho mỗi mô hình
-        for (i = 0; i < 50; i++) {
-            const createTaskRecord = await createTaskRecords(count);
-            console.log('còn ', 50 - i, ' lần');
+        const count = 50000; // Số bản ghi cho mỗi mô hình
+        for (i = 0; i < 94; i++) {
+            await createTaskRecords(count);
+            console.log('còn ', 94 - i, ' lần');
         }
     } catch (err) {
         console.error('Error running the script:', err);

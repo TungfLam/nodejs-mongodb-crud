@@ -24,34 +24,27 @@ cloudinary.config({
  * @throws {Error} - Ném ra lỗi nếu gọi API thất bại.
  */
 const getResultsUserTasks = async (id, limit, page, query) => {
-    try {
-        if (!id) {
-            throw new Error('Không nhận được id Task!');
-        }
+    if (!id) throw new Error('Không nhận được id Task!');
 
-        // Tạo điều kiện query cơ bản
-        const filterQuery = buildFilterQuery(id, query);
-        const sortQuery = buildSortQuery(query);
+    // Tạo điều kiện query cơ bản
+    const filterQuery = buildFilterQuery(id, query);
+    const sortQuery = buildSortQuery(query);
 
-        // Lấy tổng số bản ghi trong bảng Result
-        const total_task = await Result.resultModel.countDocuments(filterQuery);
-
-        // Tạo phản hồi phân trang
-        const response = buildPaginationResponse(total_task, page, limit);
-
-        // Biến lấy danh sách result trong db nếu có hoặc không có sort
-        const get_result = await Result.resultModel
+    // Thực hiện các truy vấn
+    const [total_task, get_result] = await Promise.all([
+        Result.resultModel.countDocuments(filterQuery),
+        Result.resultModel
             .find(filterQuery)
             .limit(limit)
             .skip((page - 1) * limit)
             .sort(sortQuery)
-            .select('-__v');
+            .select('-__v'),
+    ]);
 
-        response.data = get_result;
-        return response;
-    } catch (e) {
-        throw new Error(e);
-    }
+    // Tạo phản hồi phân trang
+    const response = buildPaginationResponse(total_task, page, limit);
+    response.data = get_result;
+    return response;
 };
 
 /**
@@ -63,29 +56,23 @@ const getResultsUserTasks = async (id, limit, page, query) => {
 const buildFilterQuery = (id, query) => {
     const filterQuery = { task_id: id, is_delete: false };
 
-    for (const key in query) {
+    Object.keys(query).forEach((key) => {
         const value = query[key];
 
         switch (key) {
             case 'date':
-                filterQuery.created_at = {
-                    $gte: moment(value, 'YYYY-MM-DD').startOf('day').toDate(),
-                    $lt: moment(value, 'YYYY-MM-DD').endOf('day').toDate(),
-                };
+                filterQuery.created_at = createDateFilter(value, 'day');
                 break;
             case 'month':
-                filterQuery.created_at = {
-                    $gte: moment(value, 'YYYY-MM').startOf('month').toDate(),
-                    $lt: moment(value, 'YYYY-MM').endOf('month').toDate(),
-                };
+                filterQuery.created_at = createDateFilter(value, 'month');
                 break;
             case 'year':
-                filterQuery.created_at = {
-                    $gte: moment(value, 'YYYY').startOf('year').toDate(),
-                    $lt: moment(value, 'YYYY').endOf('year').toDate(),
-                };
+                filterQuery.created_at = createDateFilter(value, 'year');
                 break;
             case 'date_range':
+                const a = [1, 2, 4, 'ád'];
+                console.log(value);
+                console.log(a);
                 if (Array.isArray(value) && value.length === 2) {
                     filterQuery.created_at = {
                         $gte: moment(value[0], 'YYYY-MM-DD')
@@ -101,7 +88,7 @@ const buildFilterQuery = (id, query) => {
                 filterQuery[key] = { $regex: value, $options: 'i' };
                 break;
         }
-    }
+    });
 
     return filterQuery;
 };
@@ -114,17 +101,39 @@ const buildFilterQuery = (id, query) => {
 const buildSortQuery = (query) => {
     const sortQuery = {};
 
-    for (const key in query) {
-        const value = query[key];
-
+    Object.keys(query).forEach((key) => {
         if (key.startsWith('sort_')) {
             const sortField = key.slice(5);
-            sortQuery[sortField] = Number(value) || 1;
+            sortQuery[sortField] = Number(query[key]) || 1;
+        } else {
+            const sortField = 'created_at';
+            sortQuery[sortField] = Number(query[key]) || 1;
         }
-    }
+    });
 
     return sortQuery;
 };
+
+/**
+ * Tạo bộ lọc ngày
+ * @param {string} value - Giá trị ngày.
+ * @param {string} unit - Đơn vị thời gian ('day', 'month', 'year').
+ * @returns {Object} - Đối tượng bộ lọc ngày.
+ */
+const createDateFilter = (value, unit) => ({
+    $gte: moment(
+        value,
+        `YYYY${unit === 'day' ? '-MM-DD' : unit === 'month' ? '-MM' : ''}`,
+    )
+        .startOf(unit)
+        .toDate(),
+    $lt: moment(
+        value,
+        `YYYY${unit === 'day' ? '-MM-DD' : unit === 'month' ? '-MM' : ''}`,
+    )
+        .endOf(unit)
+        .toDate(),
+});
 
 /**
  * Tạo phản hồi phân trang dựa trên tổng số bản ghi, trang hiện tại và số lượng bản ghi mỗi trang
@@ -133,20 +142,18 @@ const buildSortQuery = (query) => {
  * @param {number} limit - Số lượng bản ghi trên mỗi trang.
  * @returns {Object} - Đối tượng phản hồi phân trang.
  */
-const buildPaginationResponse = (total_task, page, limit) => {
-    return {
-        status: 'OK',
-        message: 'SUCCESS',
-        data: {},
-        paginationInfo: {
-            total: total_task,
-            page_current: page,
-            total_page: Math.ceil(total_task / limit),
-            has_next_page: page < Math.ceil(total_task / limit),
-            has_prev_page: page > 1,
-        },
-    };
-};
+const buildPaginationResponse = (total_task, page, limit) => ({
+    status: 'OK',
+    message: 'SUCCESS',
+    data: {},
+    paginationInfo: {
+        total: total_task,
+        page_current: page,
+        total_page: Math.ceil(total_task / limit),
+        has_next_page: page < Math.ceil(total_task / limit),
+        has_prev_page: page > 1,
+    },
+});
 
 /**
  * Lấy danh sách kết quả khi được submit của mỗi user

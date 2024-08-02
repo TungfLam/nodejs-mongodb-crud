@@ -44,6 +44,44 @@ const resultSchema = new database.mongoose.Schema(
             default: 'medium',
         }, // Mức độ nỗ lực cần thiết.
         is_public: { type: Boolean, default: false }, // Trạng thái công khai của kết quả.
+
+        // Thêm các trường mới
+        reviewer_id: {
+            type: database.mongoose.Schema.Types.ObjectId,
+            ref: 'userModel',
+            required: false,
+        }, // Người đánh giá kết quả.
+        review_date: { type: Date, required: false }, // Ngày đánh giá kết quả.
+        comments: { type: String, required: false }, // Các nhận xét thêm về kết quả.
+        improvement_suggestions: { type: String, required: false }, // Gợi ý cải thiện.
+        related_tasks: [
+            {
+                type: database.mongoose.Schema.Types.ObjectId,
+                ref: 'taskModel',
+                required: false,
+            },
+        ], // Các nhiệm vụ liên quan.
+        next_steps: { type: String, required: false }, // Bước tiếp theo sau kết quả này.
+        performance_level: {
+            type: String,
+            enum: ['low', 'medium', 'high'],
+            default: 'medium',
+        }, // Mức độ hiệu suất của kết quả.
+        created_by: {
+            type: database.mongoose.Schema.Types.ObjectId,
+            ref: 'userModel',
+            required: true,
+        }, // Người tạo kết quả.
+        updated_by: {
+            type: database.mongoose.Schema.Types.ObjectId,
+            ref: 'userModel',
+            required: false,
+        }, // Người cập nhật kết quả.
+        deleted_by: {
+            type: database.mongoose.Schema.Types.ObjectId,
+            ref: 'userModel',
+            required: false,
+        }, // Người xóa kết quả.
     },
     {
         collection: 'results',
