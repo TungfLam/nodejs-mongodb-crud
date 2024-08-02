@@ -89,6 +89,19 @@ const getTasksByUserId = async (req, res, next) => {
         const page = parseInt(req.query.page) || 1; // Trang hiện tại, mặc định là 1
         const limit = parseInt(req.query.limit) || 12; // Số lượng nhiệm vụ trên mỗi trang, mặc định là 12
 
+        const searchName = req.query.name || '';
+        const startDate = req.query.startDate
+            ? new Date(req.query.startDate)
+            : null;
+        const endDate = req.query.endDate ? new Date(req.query.endDate) : null;
+        const status = req.query.status ? parseInt(req.query.status) : null;
+        const priority = req.query.priority || null;
+        const isCompleted =
+            req.query.is_completed !== undefined
+                ? req.query.is_completed === 'true'
+                : null;
+        const difficulty = req.query.difficulty || null;
+        const location = req.query.location || null;
         // Kiểm tra tính hợp lệ của ID người dùng
         if (!taskService.isValidObjectId(userId)) {
             return res.status(400).json({
@@ -98,13 +111,36 @@ const getTasksByUserId = async (req, res, next) => {
             });
         }
 
+        // Tạo điều kiện tìm kiếm
+        const searchCondition = {
+            user_id: userId, // Lọc nhiệm vụ theo ID người dùng.
+            is_delete: false, // Tìm kiếm những task chưa được xóa
+            name: { $regex: searchName, $options: 'i' }, // Tìm kiếm không phân biệt chữ hoa/thường
+        };
+
+        // Nếu có startDate và endDate, thêm vào điều kiện tìm kiếm
+        if (startDate && endDate) {
+            searchCondition.deadline = {
+                $gte: startDate, // Ngày bắt đầu (bao gồm)
+                $lte: endDate, // Ngày kết thúc (bao gồm)
+            };
+        }
+
+        if (status !== null) searchCondition.status = status;
+        if (priority) searchCondition.priority = priority;
+        if (isCompleted !== null) searchCondition.is_completed = isCompleted;
+        if (difficulty) searchCondition.difficulty = difficulty;
+        if (location) searchCondition.location = location;
+
         // Tính tổng số nhiệm vụ và số trang cần thiết cho phân trang
-        const totalItems = await taskService.countTasksByUserId(userId);
+        const totalItems = await taskService.countTasksByUserId(searchCondition);
         const totalPages = Math.ceil(totalItems / limit);
         const skip = (page - 1) * limit;
 
         // Tìm nhiệm vụ của người dùng với phân trang
-        const tasks = await taskService.findTasksByUserId(userId, skip, limit);
+        const tasks = await taskService.findTasks(searchCondition, skip, limit);
+        // const totalPages = Math.ceil(tasks / limit);
+        // const skip = (page - 1) * limit;
 
         // Kiểm tra xem có nhiệm vụ nào không
         if (tasks.length <= 0) {
