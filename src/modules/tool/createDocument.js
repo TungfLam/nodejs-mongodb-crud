@@ -25,7 +25,7 @@ async function createResultRecords(tasks, userCount, users) {
         let records = [];
         let bulkOps = [];
         tasks.forEach((task) => {
-            const resultCount = Math.floor(Math.random() * 5) + 1;
+            const resultCount = Math.floor(Math.random() * 2) + 1;
             for (let i = 0; i < resultCount; i++) {
                 const randomUser =
                     users[Math.floor(Math.random() * userCount)]._id;
@@ -133,15 +133,22 @@ async function createTaskRecords(count) {
                     assignedUsers.push(randomAssignedUser);
                 }
             }
+            // Tạo ngày bắt đầu và kết thúc ngẫu nhiên trong vòng một năm
+            const created_at = new Date(
+                Date.now() -
+                    Math.floor(Math.random() * 365) * 24 * 60 * 60 * 1000,
+            );
+            const deadline = new Date(
+                created_at.getTime() +
+                    Math.floor(Math.random() * 30) * 24 * 60 * 60 * 1000,
+            );
 
             const newTask = {
                 user_id: randomUser, // Thay thế bằng ObjectId của user thật nếu cần
                 name: `Task ${i}`,
                 desc: `Description for task ${i}`,
-                deadline: new Date(
-                    Date.now() +
-                        Math.floor(Math.random() * 30) * 24 * 60 * 60 * 1000,
-                ), // Ngày ngẫu nhiên trong 30 ngày tới
+                created_at: created_at,
+                deadline: deadline,
                 status: Math.floor(Math.random() * 2), // Random status 0 hoặc 1
                 create_by: randomUser, // Thay thế bằng ObjectId của user thật nếu cần
                 is_delete: false,
@@ -173,10 +180,10 @@ async function createTaskRecords(count) {
  */
 async function run() {
     try {
-        const count = 100000; // Số bản ghi cho mỗi mô hình
-        for (i = 0; i < 10; i++) {
+        const count = 200000; // Số bản ghi cho mỗi mô hình
+        for (i = 0; i < 50; i++) {
             const createTaskRecord = await createTaskRecords(count);
-            console.log('còn ', 10 - i, ' lần');
+            console.log('còn ', 50 - i, ' lần');
         }
     } catch (err) {
         console.error('Error running the script:', err);
