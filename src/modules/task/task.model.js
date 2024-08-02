@@ -60,7 +60,10 @@ var taskSchema = new database.mongoose.Schema(
             },
         ], // Kết quả liên quan đến nhiệm vụ.
     },
-    { collection: 'tasks', timestamps: true }, // Lưu trữ trong collection 'tasks' và thêm timestamp tự động.
+    {
+        collection: 'tasks',
+        timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
+    }, // Lưu trữ trong collection 'tasks' và thêm timestamp tự động.
 );
 
 let taskModel = database.mongoose.model('taskModel', taskSchema);

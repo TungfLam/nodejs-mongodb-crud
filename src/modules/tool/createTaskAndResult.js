@@ -4,7 +4,7 @@ const { faker } = require('@faker-js/faker');
 const mongoose = require('mongoose');
 
 const USER_ID = new mongoose.Types.ObjectId('6655f61a814c7f6072791ce0');
-const TOTAL_TASKS = 1000000;
+const TOTAL_TASKS = 100;
 const BATCH_SIZE = 2000;
 
 // Xử lý batch:
@@ -30,8 +30,8 @@ const generateDataInsertBulk = async (req, res, next) => {
             // Tạo và thêm dữ liệu cho mỗi batch
             for (let j = 0; j < BATCH_SIZE && i + j < TOTAL_TASKS; j++) {
                 const taskId = new mongoose.Types.ObjectId();
-                // const resultCount = Math.floor(Math.random() * 2) + 1;
-                const resultCount = 1;
+                const resultCount = Math.floor(Math.random() * 6) + 1;
+                // const resultCount = 1;
                 const results = []; // Mảng chứa các objectId của result cho task hiện tại
 
                 // Tạo các document result ngẫu nhiên
@@ -42,6 +42,8 @@ const generateDataInsertBulk = async (req, res, next) => {
                         _id: resultId,
                         user_id: USER_ID,
                         task_id: taskId,
+                        created_at: faker.date.future(),
+                        updated_at: faker.date.future(),
                         description: faker.lorem.paragraph(),
                         result_image: [faker.image.url(), faker.image.url()],
                         score: Math.floor(Math.random() * 101),
@@ -74,6 +76,10 @@ const generateDataInsertBulk = async (req, res, next) => {
                     results.push(resultId); // Thêm objectId của result vào mảng
                 }
 
+                const createdAt = faker.date.recent({ days: 365 }); // Ngày trong quá khứ trong vòng 365 ngày
+                const updatedAt = faker.date.between(createdAt, new Date(createdAt.getTime() + 365 * 24 * 60 * 60 * 1000)); // Ngày giữa createdAt và 1 năm sau đó
+                const deadline = faker.date.soon({ days: 365 }, updatedAt); // Ngày trong vòng 1 năm từ updatedAt
+
                 // Tạo document task ngẫu nhiên và thêm vào bulk operation
                 taskBulk.insert({
                     _id: taskId,
@@ -81,7 +87,12 @@ const generateDataInsertBulk = async (req, res, next) => {
                     name: faker.lorem.words(3),
                     desc: faker.lorem.sentence(),
                     image: faker.image.url(),
-                    deadline: faker.date.future(),
+                    // createdAt: faker.date.past(), // Ngày quá khứ
+                    // updatedAt: faker.date.between(createdAt, new Date()), // Ngày giữa created_at và hiện tại
+                    // deadline: faker.date.future(),
+                    createdAt, // Sử dụng giá trị đã khởi tạo
+                    updatedAt, // Sử dụng giá trị đã khởi tạo
+                    deadline,// Ngày tương lai
                     status: Math.random() < 0.5 ? 0 : 1,
                     create_by: USER_ID,
                     update_by: USER_ID,
