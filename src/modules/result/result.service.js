@@ -85,6 +85,9 @@ const buildFilterQuery = (id, query) => {
                 }
                 break;
             default:
+                if (key.startsWith('sort_')) {
+                    break;
+                }
                 filterQuery[key] = { $regex: value, $options: 'i' };
                 break;
         }
