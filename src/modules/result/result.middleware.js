@@ -45,10 +45,10 @@ const timestampPlugin = (schema) => {
 const blockCreateBy = (resultSchema) => {
     function preventUpdateCreatedBy(next) {
         const update = this.getUpdate();
-        if (update.$set && update.$set.createdBy) {
-            delete update.$set.createdBy;
-        } else if (update.createdBy) {
-            delete update.createdBy;
+        if (update.$set && update.$set.created_by) {
+            delete update.$set.created_by;
+        } else if (update.created_by) {
+            delete update.created_by;
         }
         next();
     }

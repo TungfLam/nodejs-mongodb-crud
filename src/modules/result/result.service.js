@@ -14,116 +14,143 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
+const getResultsUserTasks = async (id, limit, page, query) => {
+    if (!id) throw new Error('Không nhận được id Task!');
+
+    // Tạo điều kiện query cơ bản
+    const filterQuery = buildFilterQuery(id, query);
+    const sortQuery = buildSortQuery(query);
+
+    // Thực hiện các truy vấn
+    const [total_task, get_result] = await Promise.all([
+        Result.resultModel.countDocuments(filterQuery),
+        Result.resultModel
+            .find(filterQuery)
+            .limit(limit)
+            .skip((page - 1) * limit)
+            .sort(sortQuery)
+            .select(
+                '-__v -improvement_suggestions -review_date -updated_by -deleted_by',
+            )
+            .populate('user_id', 'email full_name phone_number')
+            .populate('reviewer_id')
+            .populate('updated_by')
+            .populate('attachments', 'file_name file_url')
+            .populate('tags')
+            .exec(),
+    ]);
+
+    // Tạo phản hồi phân trang
+    const response = buildPaginationResponse(total_task, page, limit);
+    response.data = get_result;
+    return response;
+};
+
 /**
- * Lấy danh sách kết quả khi được submit của mỗi user
+ * Tạo điều kiện lọc dựa trên các bộ lọc được truyền vào
  * @param {string} id - Id của task cần lấy danh sách kết quả.
- * @param {number} limit - Số lượng bản ghi trên mỗi trang.
- * @param {number} page - Số trang hiện tại.
- * @param {Object} query - Đối tượng chứa các bộ lọc và sắp xếp.
- * @returns {Object} - Dữ liệu phản hồi chứa danh sách các thuộc tính.
- * @throws {Error} - Ném ra lỗi nếu gọi API thất bại.
+ * @param {Object} query - Các điều kiện lọc và sắp xếp.
+ * @returns {Object} - Đối tượng điều kiện lọc.
  */
-const getResultsUserTasks = (id, limit, page, query) => {
-    return new Promise(async (resolve, reject) => {
-        try {
-            // Kiểm tra id task có tồn tại không
-            if (!id) {
-                throw new Error('Không nhận được id Task!');
-            }
-            // Tạo điều kiện query cơ bản
-            const filterQuery = {
-                task_id: id,
-                is_delete: false,
-            };
-            const sortQuery = {};
+const buildFilterQuery = (id, query) => {
+    const filterQuery = { task_id: id, is_delete: false };
 
-            // Phân loại các điều kiện lọc và sắp xếp
-            for (const key in query) {
-                const value = query[key];
+    Object.keys(query).forEach((key) => {
+        const value = query[key];
 
-                switch (key) {
-                    case 'date':
-                        filterQuery.created_at = {
-                            $gte: moment(value, 'YYYY-MM-DD')
-                                .startOf('day')
-                                .toDate(),
-                            $lt: moment(value, 'YYYY-MM-DD')
-                                .endOf('day')
-                                .toDate(),
-                        };
-                        break;
-                    case 'month':
-                        filterQuery.created_at = {
-                            $gte: moment(value, 'YYYY-MM')
-                                .startOf('month')
-                                .toDate(),
-                            $lt: moment(value, 'YYYY-MM')
-                                .endOf('month')
-                                .toDate(),
-                        };
-                        break;
-                    case 'year':
-                        filterQuery.created_at = {
-                            $gte: moment(value, 'YYYY')
-                                .startOf('year')
-                                .toDate(),
-                            $lt: moment(value, 'YYYY').endOf('year').toDate(),
-                        };
-                        break;
-                    case 'date_range':
-                        if (Array.isArray(value) && value.length === 2) {
-                            filterQuery.created_at = {
-                                $gte: moment(value[0], 'YYYY-MM-DD')
-                                    .startOf('day')
-                                    .toDate(),
-                                $lt: moment(value[1], 'YYYY-MM-DD')
-                                    .endOf('day')
-                                    .toDate(),
-                            };
-                        }
-                        break;
-                    default:
-                        if (key.startsWith('sort_')) {
-                            const sortField = key.slice(5);
-                            sortQuery[sortField] = Number(value) || 1;
-                        } else {
-                            filterQuery[key] = { $regex: value, $options: 'i' };
-                        }
-                        break;
+        switch (key) {
+            case 'outcome':
+                filterQuery.outcome = { $regex: value, $options: 'i' };
+                break;
+            case 'date':
+                filterQuery.created_at = createDateFilter(value, 'day');
+                break;
+            case 'month':
+                filterQuery.created_at = createDateFilter(value, 'month');
+                break;
+            case 'year':
+                filterQuery.created_at = createDateFilter(value, 'year');
+                break;
+            case 'date_range':
+                if (Array.isArray(value) && value.length === 2) {
+                    filterQuery.created_at = {
+                        $gte: moment(value[0], 'YYYY-MM-DD')
+                            .startOf('day')
+                            .toDate(),
+                        $lt: moment(value[1], 'YYYY-MM-DD')
+                            .endOf('day')
+                            .toDate(),
+                    };
                 }
-            }
-
-            // Lấy tổng số bản ghi trong bảng Result
-            const total_task =
-                await Result.resultModel.countDocuments(filterQuery);
-            const response = {
-                status: 'OK',
-                message: 'SUCCESS',
-                data: {},
-                paginationInfo: {
-                    total: total_task,
-                    page_current: page,
-                    total_page: Math.ceil(total_task / limit),
-                    has_next_page: page < Math.ceil(total_task / limit),
-                    has_prev_page: page > 1,
-                },
-            };
-
-            // Biến lấy danh sách result trong db nếu có hoặc không có sort
-            const get_result = await Result.resultModel
-                .find(filterQuery)
-                .limit(limit)
-                .skip((page - 1) * limit)
-                .sort(sortQuery)
-                .select('-__v');
-
-            response.data = get_result;
-            resolve(response);
-        } catch (e) {
-            reject(e);
+                break;
+            default:
+                break;
         }
     });
+
+    return filterQuery;
 };
+
+/**
+ * Tạo điều kiện sắp xếp dựa trên các bộ lọc được truyền vào
+ * @param {Object} query - Các điều kiện lọc và sắp xếp.
+ * @returns {Object} - Đối tượng điều kiện sắp xếp.
+ */
+const buildSortQuery = (query) => {
+    const sortQuery = {};
+
+    Object.keys(query).forEach((key) => {
+        if (key.startsWith('sort_')) {
+            const sortField = key.slice(5);
+            if (['outcome', 'created_at', 'score'].includes(sortField)) {
+                sortQuery[sortField] = Number(query[key]) || 1;
+            }
+        }
+    });
+
+    return sortQuery;
+};
+
+/**
+ * Tạo bộ lọc ngày
+ * @param {string} value - Giá trị ngày.
+ * @param {string} unit - Đơn vị thời gian ('day', 'month', 'year').
+ * @returns {Object} - Đối tượng bộ lọc ngày.
+ */
+const createDateFilter = (value, unit) => ({
+    $gte: moment(
+        value,
+        `YYYY${unit === 'day' ? '-MM-DD' : unit === 'month' ? '-MM' : ''}`,
+    )
+        .startOf(unit)
+        .toDate(),
+    $lt: moment(
+        value,
+        `YYYY${unit === 'day' ? '-MM-DD' : unit === 'month' ? '-MM' : ''}`,
+    )
+        .endOf(unit)
+        .toDate(),
+});
+
+/**
+ * Tạo phản hồi phân trang dựa trên tổng số bản ghi, trang hiện tại và số lượng bản ghi mỗi trang
+ * @param {number} total_task - Tổng số bản ghi.
+ * @param {number} page - Số trang hiện tại.
+ * @param {number} limit - Số lượng bản ghi trên mỗi trang.
+ * @returns {Object} - Đối tượng phản hồi phân trang.
+ */
+const buildPaginationResponse = (total_task, page, limit) => ({
+    status: 'OK',
+    message: 'SUCCESS',
+    data: {},
+    paginationInfo: {
+        total: total_task,
+        page_current: page,
+        total_page: Math.ceil(total_task / limit),
+        has_next_page: page < Math.ceil(total_task / limit),
+        has_prev_page: page > 1,
+    },
+});
 
 /**
  * Lấy danh sách kết quả khi được submit của mỗi user
@@ -132,7 +159,7 @@ const getResultsUserTasks = (id, limit, page, query) => {
  * @returns {Object} - Dữ liệu phản hồi chứa danh sách các thuộc tính.
  * @throws {Error} - Ném ra lỗi nếu gọi API thất bại.
  */
-const createResultsUserTask = async (data, task_id) => {
+const createResultsUserTask = async (files, data, task_id) => {
     try {
         // Kiểm tra data từ req.query có tồn tại không
         if (!data) {
@@ -143,6 +170,22 @@ const createResultsUserTask = async (data, task_id) => {
             throw new Error({ message: 'không nhận được task id' });
         }
         const { user_id, description, score, outcome, ...body } = data;
+        // Tạo các tài liệu trong collection attachments
+        let attachments = [];
+        if (files && files.length > 0) {
+            attachments = await Promise.all(
+                files.map((file) =>
+                    new Result.attachmentModel({
+                        file_name: file.originalname,
+                        file_url: file.path,
+                    }).save(),
+                ),
+            );
+        }
+
+        // Lưu các ObjectId của attachments trong resultModel
+        body.attachments = attachments.map((attachment) => attachment._id);
+
         // Tạo mới bản ghi từ các trường nhận được
         const result_task = await Result.resultModel.create({
             user_id,
@@ -201,7 +244,7 @@ const getDetailResultsUserTask = (id) => {
  * @returns {Object} - Dữ liệu phản hồi chứa danh sách các thuộc tính.
  * @throws {Error} - Ném ra lỗi nếu gọi API thất bại.
  */
-const updateResultsUserTask = async (result_id, data) => {
+const updateResultsUserTask = async (files, result_id, data) => {
     try {
         // Kiểm tra data từ req.query có tồn tại không
         if (!data) {
@@ -210,6 +253,17 @@ const updateResultsUserTask = async (result_id, data) => {
         // Kiểm tra có tồn tại task id không
         if (!result_id) {
             throw new Error({ message: 'không nhận được result_id id' });
+        }
+        if (files && files.length > 0) {
+            attachments = await Promise.all(
+                files.map((file) =>
+                    new Result.attachmentModel({
+                        file_name: file.originalname,
+                        file_url: file.path,
+                    }).save(),
+                ),
+            );
+            deleteFile(result_id);
         }
         const update_result = await Result.resultModel.findByIdAndUpdate(
             result_id,
@@ -239,9 +293,20 @@ const deleteFile = async (result_id) => {
         if (!result_id) {
             throw new Error({ message: 'không nhận được result_id id' });
         }
-        const re = await Result.resultModel.findById({ _id: result_id });
-        re.result_image.map((image) => {
-            const fileToDelete = path.join(__dirname, `../../../${image}`);
+        const docs_attachments = await Result.resultModel.findById({
+            _id: result_id,
+        });
+        const ids = docs_attachments.attachments.map((attachment) =>
+            attachment.toString(),
+        );
+        ids.map(async (id) => {
+            const re = await Result.attachmentModel.findById({
+                _id: id,
+            });
+            const fileToDelete = path.join(
+                __dirname,
+                `../../../${re.file_url}`,
+            );
             fs.unlink(fileToDelete, (err) => {
                 if (err) {
                     console.error('Không thể xóa file:', err);
@@ -302,10 +367,49 @@ const deleteResultsUserTask = async (id) => {
             throw new Error({ message: 'không nhận được id result' });
         }
         // Tìm bản ghi có id tương ứng và sửa is_delete thành true
-        await Result.resultModel.findByIdAndUpdate(
+        const result_delete = await Result.resultModel.findByIdAndUpdate(
             id,
             { is_delete: true },
             { new: true },
+        );
+        const query = {
+            results: {
+                $in: [id],
+            },
+        };
+        if (result_delete.attachments) {
+            result_delete.attachments.map(async (attachment) => {
+                await Result.attachmentModel.findByIdAndDelete({
+                    _id: attachment,
+                });
+            });
+        }
+        updateAfterDeleteResultsTask(id, query);
+
+        return { status: '200', message: 'delete success!!' };
+    } catch (e) {
+        throw e;
+    }
+};
+
+/**
+ * Lấy danh sách kết quả khi được submit của mỗi user
+ * @param {string} id - Id của result cần xóa.
+ * @returns {Object} - Dữ liệu phản hồi chứa danh sách các thuộc tính.
+ * @throws {Error} - Ném ra lỗi nếu gọi API thất bại.
+ */
+const updateAfterDeleteResultsTask = async (id, query) => {
+    try {
+        // Kiểm tra data từ req.query có tồn tại không
+        if (!query) {
+            throw new Error({ message: 'không nhận được id result' });
+        }
+        await Task.taskModel.updateMany(
+            { results: id },
+            {
+                $pull: query,
+                updated_at: new Date(),
+            },
         );
         return { status: '200', message: 'delete success!!' };
     } catch (e) {
