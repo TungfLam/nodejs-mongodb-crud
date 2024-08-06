@@ -29,7 +29,6 @@ const getResultsUserTasks = async (id, limit, page, query) => {
     // Tạo điều kiện query cơ bản
     const filterQuery = buildFilterQuery(id, query);
     const sortQuery = buildSortQuery(query);
-
     // Thực hiện các truy vấn
     const [total_task, get_result] = await Promise.all([
         Result.resultModel.countDocuments(filterQuery),
@@ -38,7 +37,13 @@ const getResultsUserTasks = async (id, limit, page, query) => {
             .limit(limit)
             .skip((page - 1) * limit)
             .sort(sortQuery)
-            .select('-__v'),
+            .select('-__v')
+            .populate('user_id')
+            .populate('reviewer_id')
+            // .populate('updated_by')
+            .populate('attachments')
+            .populate('tags')
+            .exec(),
     ]);
 
     // Tạo phản hồi phân trang
@@ -108,9 +113,6 @@ const buildSortQuery = (query) => {
         if (key.startsWith('sort_')) {
             const sortField = key.slice(5);
             sortQuery[sortField] = Number(query[key]) || 1;
-        } else {
-            const sortField = 'created_at';
-            sortQuery[sortField] = Number(query[key]) || 1;
         }
     });
 
@@ -165,7 +167,7 @@ const buildPaginationResponse = (total_task, page, limit) => ({
  * @returns {Object} - Dữ liệu phản hồi chứa danh sách các thuộc tính.
  * @throws {Error} - Ném ra lỗi nếu gọi API thất bại.
  */
-const createResultsUserTask = async (data, task_id) => {
+const createResultsUserTask = async (files, data, task_id) => {
     try {
         // Kiểm tra data từ req.query có tồn tại không
         if (!data) {
@@ -176,6 +178,22 @@ const createResultsUserTask = async (data, task_id) => {
             throw new Error({ message: 'không nhận được task id' });
         }
         const { user_id, description, score, outcome, ...body } = data;
+        // Tạo các tài liệu trong collection attachments
+        let attachments = [];
+        if (files && files.length > 0) {
+            attachments = await Promise.all(
+                files.map((file) =>
+                    new Result.attachmentModel({
+                        file_name: file.originalname,
+                        file_url: file.path,
+                    }).save(),
+                ),
+            );
+        }
+
+        // Lưu các ObjectId của attachments trong resultModel
+        body.attachments = attachments.map((attachment) => attachment._id);
+
         // Tạo mới bản ghi từ các trường nhận được
         const result_task = await Result.resultModel.create({
             user_id,
@@ -234,7 +252,7 @@ const getDetailResultsUserTask = (id) => {
  * @returns {Object} - Dữ liệu phản hồi chứa danh sách các thuộc tính.
  * @throws {Error} - Ném ra lỗi nếu gọi API thất bại.
  */
-const updateResultsUserTask = async (result_id, data) => {
+const updateResultsUserTask = async (files, result_id, data) => {
     try {
         // Kiểm tra data từ req.query có tồn tại không
         if (!data) {
@@ -243,6 +261,17 @@ const updateResultsUserTask = async (result_id, data) => {
         // Kiểm tra có tồn tại task id không
         if (!result_id) {
             throw new Error({ message: 'không nhận được result_id id' });
+        }
+        if (files && files.length > 0) {
+            attachments = await Promise.all(
+                files.map((file) =>
+                    new Result.attachmentModel({
+                        file_name: file.originalname,
+                        file_url: file.path,
+                    }).save(),
+                ),
+            );
+            deleteFile(result_id);
         }
         const update_result = await Result.resultModel.findByIdAndUpdate(
             result_id,
@@ -272,9 +301,20 @@ const deleteFile = async (result_id) => {
         if (!result_id) {
             throw new Error({ message: 'không nhận được result_id id' });
         }
-        const re = await Result.resultModel.findById({ _id: result_id });
-        re.result_image.map((image) => {
-            const fileToDelete = path.join(__dirname, `../../../${image}`);
+        const docs_attachments = await Result.resultModel.findById({
+            _id: result_id,
+        });
+        const ids = docs_attachments.attachments.map((attachment) =>
+            attachment.toString(),
+        );
+        ids.map(async (id) => {
+            const re = await Result.attachmentModel.findById({
+                _id: id,
+            });
+            const fileToDelete = path.join(
+                __dirname,
+                `../../../${re.file_url}`,
+            );
             fs.unlink(fileToDelete, (err) => {
                 if (err) {
                     console.error('Không thể xóa file:', err);

@@ -189,9 +189,9 @@ async function createTaskRecords(count) {
 async function run() {
     try {
         const count = 50000; // Số bản ghi cho mỗi mô hình
-        for (i = 0; i < 94; i++) {
+        for (i = 0; i < 60; i++) {
             await createTaskRecords(count);
-            console.log('còn ', 94 - i, ' lần');
+            console.log('còn ', 60 - i, ' lần');
         }
     } catch (err) {
         console.error('Error running the script:', err);

@@ -1,4 +1,6 @@
 const resultService = require('./result.service');
+const userModel = require('../user/user.model');
+const jwt = require('jsonwebtoken');
 
 // Hàm lấy danh sách kết quả khi được submit của mỗi task
 const getResultsUserTasks = async (req, res) => {
@@ -38,7 +40,7 @@ const createResultsUserTask = async (req, res) => {
             'pending review',
             'success',
         ];
-        const files = req.files;
+        const files = req?.files;
         // Kiểm tra user_id có giá trị ko
         if (!user_id) {
             return res.status(400).json({
@@ -74,20 +76,10 @@ const createResultsUserTask = async (req, res) => {
                 message: 'outcome phải là 1 trong những dữ liệu có sẵn',
             });
         }
-        // if (file.length !== 0) {
-        //   const upload = await resultService.uploadImage(file);
-        //   if (upload) {
-        //     data.result_image = upload.url;
-        //   }
-        // }
-        if (files.length !== 0) {
-            body.result_image = [];
-            files.map((file) => {
-                body.result_image.push(file.path);
-            });
-        }
+
         // chuyển sang file service để xử lý
         const response = await resultService.createResultsUserTask(
+            files,
             body,
             task_id,
         );
@@ -131,6 +123,7 @@ const updateResultsUserTask = async (req, res) => {
             'pending review',
             'success',
         ];
+        console.log('test');
         // Kiểm tra description có giá trị ko
         if (!data.description) {
             return res.status(400).json({
@@ -159,15 +152,10 @@ const updateResultsUserTask = async (req, res) => {
                 message: 'outcome phải là 1 trong những dữ liệu có sẵn',
             });
         }
-        if (files.length !== 0) {
-            data.result_image = [];
-            files.map((file) => {
-                data.result_image.push(file.path);
-            });
-            resultService.deleteFile(result_id);
-        }
+
         // chuyển sang file service để xử lý
         const response = await resultService.updateResultsUserTask(
+            files,
             result_id,
             data,
         );
@@ -183,6 +171,12 @@ const updateResultsUserTask = async (req, res) => {
 const deleteResultsUserTask = async (req, res) => {
     try {
         const result_id = req.params.result_id;
+        // delete_by đợi lâm nó làm lại user
+
+        // const token = req.headers.token.split(' ')[1];
+        // const decoded = jwt.verify(token, process.env.ACCESS_TOKEN);
+        // const delete_by = await userModel.findOne({ _id: decoded.id }, 'id');
+
         // Kiểm tra result_id có tồn tại không
         if (!result_id) {
             return res.status(400).json({
