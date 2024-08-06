@@ -27,10 +27,77 @@ const countTasks = async (searchCondition) => {
 const findTasks = async (searchCondition, skip, limit) => {
     return await task.taskModel
         .find(searchCondition) // Tìm nhiệm vụ theo điều kiện tìm kiếm.
-        .populate('results') // Nạp các tài liệu liên quan từ trường `results`.
+        // .populate('results') // Nạp các tài liệu liên quan từ trường `results`.
+        .select('name deadline') // Chỉ chọn các trường cần thiết
         .skip(skip) // Bỏ qua số lượng tài liệu theo `skip` để phân trang.
         .limit(limit) // Giới hạn số lượng tài liệu lấy theo `limit` để phân trang.
-        .sort({ createdAt: -1 }); // Sắp xếp kết quả theo trường `createdAt` theo thứ tự giảm dần.
+        // .sort({ created_at: -1 }) // Sắp xếp kết quả theo trường `createdAt` theo thứ tự giảm dần.
+        .hint({
+            deadline: 1,
+            user_id: 1,
+            is_delete: 1,
+            name: 1,
+            status: 1,
+            priority: 1,
+            is_completed: 1,
+            difficulty: 1,
+            location: 1,
+            created_at: -1,
+        })
+        .lean();
+};
+
+/**
+ * Tìm kiếm nhiệm vụ theo điều kiện tìm kiếm với phân trang và sắp xếp.
+ *
+ * @param {Object} searchCondition - Điều kiện tìm kiếm để lọc các nhiệm vụ.
+ * @param {number} skip - Số lượng tài liệu cần bỏ qua (phân trang).
+ * @param {number} limit - Số lượng tài liệu tối đa cần lấy (phân trang).
+ * @return {Promise<Array<Object>>} Một Promise sẽ trả về một mảng các nhiệm vụ thỏa mãn điều kiện tìm kiếm.
+ */
+const findTasksWithCount = async (searchCondition, skip, limit) => {
+    const result = await task.taskModel
+        .aggregate([
+            { $match: searchCondition },
+            {
+                $facet: {
+                    tasks: [
+                        { $sort: { createdAt: -1 } },
+                        { $skip: skip },
+                        { $limit: limit },
+                        {
+                            $project: {
+                                name: 1,
+                                deadline: 1,
+                                status: 1,
+                                priority: 1,
+                                is_completed: 1,
+                                difficulty: 1,
+                                location: 1,
+                            },
+                        },
+                    ],
+                    totalCount: [{ $count: 'count' }],
+                },
+            },
+        ])
+        .hint({
+            user_id: 1,
+            is_delete: 1,
+            name: 1,
+            deadline: 1,
+            status: 1,
+            priority: 1,
+            is_completed: 1,
+            difficulty: 1,
+            location: 1,
+            createdAt: -1,
+        });
+
+    return {
+        tasks: result[0].tasks,
+        totalCount: result[0].totalCount[0] ? result[0].totalCount[0].count : 0,
+    };
 };
 
 /**
@@ -115,9 +182,7 @@ const findTasksByUserId = async (userId, skip, limit) => {
  * @return {Promise<number>} Một Promise sẽ trả về số lượng nhiệm vụ thỏa mãn điều kiện.
  */
 const countTasksByUserId = async (searchCondition, userId) => {
-    return await task.taskModel.countDocuments(
-        searchCondition
-    );
+    return await task.taskModel.countDocuments(searchCondition).lean();
 };
 
 /**
@@ -148,6 +213,7 @@ const upload = multer({ storage: storage }); // Đối tượng Multer để x�
 module.exports = {
     countTasks,
     findTasks,
+    findTasksWithCount,
     isValidObjectId,
     findTaskById,
     deleteTaskById,

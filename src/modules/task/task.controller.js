@@ -118,6 +118,9 @@ const getTasksByUserId = async (req, res, next) => {
             name: { $regex: searchName, $options: 'i' }, // Tìm kiếm không phân biệt chữ hoa/thường
         };
 
+        if (searchName)
+            searchCondition.name = { $regex: searchName, $options: 'i' };
+
         // Nếu có startDate và endDate, thêm vào điều kiện tìm kiếm
         if (startDate && endDate) {
             searchCondition.deadline = {
@@ -133,14 +136,18 @@ const getTasksByUserId = async (req, res, next) => {
         if (location) searchCondition.location = location;
 
         // Tính tổng số nhiệm vụ và số trang cần thiết cho phân trang
-        const totalItems = await taskService.countTasksByUserId(searchCondition);
-        const totalPages = Math.ceil(totalItems / limit);
+
         const skip = (page - 1) * limit;
 
         // Tìm nhiệm vụ của người dùng với phân trang
-        const tasks = await taskService.findTasks(searchCondition, skip, limit);
-        // const totalPages = Math.ceil(tasks / limit);
-        // const skip = (page - 1) * limit;
+        console.time('Execution Time');
+        const [tasks, totalItems] = await Promise.all([
+            taskService.findTasks(searchCondition, skip, limit),
+            taskService.countTasks(searchCondition),
+        ]);
+        console.timeEnd('Execution Time');
+
+        const totalPages = Math.ceil(totalItems / limit);
 
         // Kiểm tra xem có nhiệm vụ nào không
         if (tasks.length <= 0) {
@@ -429,12 +436,18 @@ const searchTasksByName = async (req, res, next) => {
         if (isCompleted !== null) searchCondition.is_completed = isCompleted;
         if (difficulty) searchCondition.difficulty = difficulty;
         if (location) searchCondition.location = location;
+        // Tính tổng số nhiệm vụ và số trang cần thiết cho phân trang
 
-        const totalItems = await taskService.countTasks(searchCondition);
-        const totalPages = Math.ceil(totalItems / limit);
         const skip = (page - 1) * limit;
 
-        const tasks = await taskService.findTasks(searchCondition, skip, limit);
+        // Tìm nhiệm vụ của người dùng với phân trang
+
+        const [tasks, totalItems] = await Promise.all([
+            taskService.findTasks(searchCondition, skip, limit),
+            taskService.countTasks(searchCondition),
+        ]);
+
+        const totalPages = Math.ceil(totalItems / limit);
 
         if (tasks.length === 0) {
             return res.status(404).json({

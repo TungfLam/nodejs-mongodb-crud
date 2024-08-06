@@ -19,37 +19,37 @@ app.use(cors());
 
 const secret = crypto.randomBytes(64).toString('hex');
 app.use(
-  session({
-    secret: secret,
-    resave: true,
-    saveUninitialized: true,
-  }),
+    session({
+        secret: secret,
+        resave: true,
+        saveUninitialized: true,
+    }),
 );
 
 app.use('/api', apiRouter);
 
 app.get('/', (req, res) => {
-  res.send('running');
+    res.send('running');
 });
 
 app.use(function (req, res, next) {
-  next(createError(404));
+    next(createError(404));
 });
 app.use(function (err, req, res, next) {
-  res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
+    res.locals.message = err.message;
+    res.locals.error = req.app.get('env') === 'development' ? err : {};
 
-  res.status(err.status | 1 | 500);
-  if (req.originalUrl.indexOf('/api') == 0) {
-    res.json({
-      status: 0,
-      msg: err.message,
-    });
-  } else {
-    res.render('error');
-  }
+    res.status(err.status | 1 | 500);
+    if (req.originalUrl.indexOf('/api') == 0) {
+        res.json({
+            status: 0,
+            msg: err.message,
+        });
+    } else {
+        res.render('error');
+    }
 });
 
 app.listen(port, () => {
-  console.log(`server runing port ${port} `);
+    console.log(`server runing port ${port} `);
 });

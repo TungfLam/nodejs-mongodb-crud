@@ -4,7 +4,7 @@ const { faker } = require('@faker-js/faker');
 const mongoose = require('mongoose');
 
 const USER_ID = new mongoose.Types.ObjectId('6655f61a814c7f6072791ce0');
-const TOTAL_TASKS = 100;
+const TOTAL_TASKS = 3238969;
 const BATCH_SIZE = 2000;
 
 // Xử lý batch:
@@ -76,9 +76,14 @@ const generateDataInsertBulk = async (req, res, next) => {
                     results.push(resultId); // Thêm objectId của result vào mảng
                 }
 
-                const createdAt = faker.date.recent({ days: 365 }); // Ngày trong quá khứ trong vòng 365 ngày
-                const updatedAt = faker.date.between(createdAt, new Date(createdAt.getTime() + 365 * 24 * 60 * 60 * 1000)); // Ngày giữa createdAt và 1 năm sau đó
-                const deadline = faker.date.soon({ days: 365 }, updatedAt); // Ngày trong vòng 1 năm từ updatedAt
+                const created_at = faker.date.recent({ days: 365 }); // Ngày trong quá khứ trong vòng 365 ngày
+                const updated_at = faker.date.between({
+                    from: created_at,
+                    to: new Date(
+                        created_at.getTime() + 365 * 24 * 60 * 60 * 1000,
+                    ),
+                }); // Ngày giữa created_at và 1 năm sau đó
+                const deadline = faker.date.soon({ days: 365 }, updated_at); // Ngày trong vòng 1 năm từ updated_at
 
                 // Tạo document task ngẫu nhiên và thêm vào bulk operation
                 taskBulk.insert({
@@ -87,17 +92,52 @@ const generateDataInsertBulk = async (req, res, next) => {
                     name: faker.lorem.words(3),
                     desc: faker.lorem.sentence(),
                     image: faker.image.url(),
-                    // createdAt: faker.date.past(), // Ngày quá khứ
-                    // updatedAt: faker.date.between(createdAt, new Date()), // Ngày giữa created_at và hiện tại
+                    // created_at: faker.date.past(), // Ngày quá khứ
+                    // updated_at: faker.date.between(created_at, new Date()), // Ngày giữa created_at và hiện tại
                     // deadline: faker.date.future(),
-                    createdAt, // Sử dụng giá trị đã khởi tạo
-                    updatedAt, // Sử dụng giá trị đã khởi tạo
-                    deadline,// Ngày tương lai
+                    created_at, // Sử dụng giá trị đã khởi tạo
+                    updated_at, // Sử dụng giá trị đã khởi tạo
+                    deadline, // Ngày tương lai
+
+                    // Các trường mới
+                    progress: Math.floor(Math.random() * 101), // Tỷ lệ hoàn thành ngẫu nhiên (0 - 100%)
+                    category: faker.lorem.word(), // Phân loại nhiệm vụ ngẫu nhiên
+                    permissions: {
+                        can_edit: Math.random() < 0.5, // Quyền chỉnh sửa ngẫu nhiên
+                        can_delete: Math.random() < 0.5, // Quyền xóa ngẫu nhiên
+                        can_view: Math.random() < 0.5, // Quyền xem ngẫu nhiên
+                    },
+                    reminders: [
+                        {
+                            time: faker.date.future(), // Thời gian nhắc nhở ngẫu nhiên
+                            message: faker.lorem.sentence(), // Thông điệp nhắc nhở ngẫu nhiên
+                        },
+                    ],
+                    feedback: [
+                        {
+                            user_id: USER_ID, // Giả định user_id là ObjectId ngẫu nhiên
+                            rating: Math.floor(Math.random() * 6), // Đánh giá ngẫu nhiên (0-5)
+                            comment: faker.lorem.sentence(), // Nhận xét ngẫu nhiên
+                        },
+                    ],
+                    completed_address: faker.location.streetAddress(), // Địa chỉ hoàn thành ngẫu nhiên
+
+                    note1: faker.lorem.words(3),
+                    note2: faker.lorem.words(3),
+                    note3: faker.lorem.words(3),
+                    note4: faker.lorem.words(3),
+                    note5: faker.lorem.words(3),
+                    note6: faker.lorem.words(3),
+                    note7: faker.lorem.words(3),
+                    note8: faker.lorem.words(3),
+                    note9: faker.lorem.words(3),
+                    note10: faker.lorem.words(3),
+
                     status: Math.random() < 0.5 ? 0 : 1,
                     create_by: USER_ID,
                     update_by: USER_ID,
                     is_delete: false,
-                    delete_by: USER_ID,
+                    delete_by: null,
                     priority: ['low', 'medium', 'high'][
                         Math.floor(Math.random() * 3)
                     ], // Độ ưu tiên ngẫu nhiên
