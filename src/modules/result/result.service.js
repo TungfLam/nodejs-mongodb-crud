@@ -14,21 +14,13 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-/**
- * Lấy danh sách kết quả khi được submit của mỗi user
- * @param {string} id - Id của task cần lấy danh sách kết quả.
- * @param {number} limit - Số lượng bản ghi trên mỗi trang.
- * @param {number} page - Số trang hiện tại.
- * @param {Object} query - Các điều kiện lọc và sắp xếp.
- * @returns {Object} - Dữ liệu phản hồi chứa danh sách các thuộc tính.
- * @throws {Error} - Ném ra lỗi nếu gọi API thất bại.
- */
 const getResultsUserTasks = async (id, limit, page, query) => {
     if (!id) throw new Error('Không nhận được id Task!');
 
     // Tạo điều kiện query cơ bản
     const filterQuery = buildFilterQuery(id, query);
     const sortQuery = buildSortQuery(query);
+
     // Thực hiện các truy vấn
     const [total_task, get_result] = await Promise.all([
         Result.resultModel.countDocuments(filterQuery),
@@ -37,10 +29,12 @@ const getResultsUserTasks = async (id, limit, page, query) => {
             .limit(limit)
             .skip((page - 1) * limit)
             .sort(sortQuery)
-            .select('-__v')
+            .select(
+                '-__v -improvement_suggestions -review_date -updated_by -deleted_by',
+            )
             .populate('user_id')
             .populate('reviewer_id')
-            // .populate('updated_by')
+            .populate('updated_by')
             .populate('attachments')
             .populate('tags')
             .exec(),
@@ -65,6 +59,9 @@ const buildFilterQuery = (id, query) => {
         const value = query[key];
 
         switch (key) {
+            case 'outcome':
+                filterQuery.outcome = { $regex: value, $options: 'i' };
+                break;
             case 'date':
                 filterQuery.created_at = createDateFilter(value, 'day');
                 break;
@@ -75,9 +72,6 @@ const buildFilterQuery = (id, query) => {
                 filterQuery.created_at = createDateFilter(value, 'year');
                 break;
             case 'date_range':
-                const a = [1, 2, 4, 'ád'];
-                console.log(value);
-                console.log(a);
                 if (Array.isArray(value) && value.length === 2) {
                     filterQuery.created_at = {
                         $gte: moment(value[0], 'YYYY-MM-DD')
@@ -90,10 +84,6 @@ const buildFilterQuery = (id, query) => {
                 }
                 break;
             default:
-                if (key.startsWith('sort_')) {
-                    break;
-                }
-                filterQuery[key] = { $regex: value, $options: 'i' };
                 break;
         }
     });
@@ -112,7 +102,9 @@ const buildSortQuery = (query) => {
     Object.keys(query).forEach((key) => {
         if (key.startsWith('sort_')) {
             const sortField = key.slice(5);
-            sortQuery[sortField] = Number(query[key]) || 1;
+            if (['outcome', 'created_at', 'score'].includes(sortField)) {
+                sortQuery[sortField] = Number(query[key]) || 1;
+            }
         }
     });
 
@@ -375,10 +367,24 @@ const deleteResultsUserTask = async (id) => {
             throw new Error({ message: 'không nhận được id result' });
         }
         // Tìm bản ghi có id tương ứng và sửa is_delete thành true
-        await Result.resultModel.findByIdAndUpdate(
+        const result_delete = await Result.resultModel.findByIdAndUpdate(
             id,
             { is_delete: true },
             { new: true },
+        );
+        if (result_delete.attachments) {
+            result_delete.attachments.map(async (attachment) => {
+                await Result.attachmentModel.findByIdAndDelete({
+                    _id: attachment,
+                });
+            });
+        }
+        await Task.taskModel.updateMany(
+            { results: id },
+            {
+                $pull: { results: id },
+                updated_at: new Date(),
+            },
         );
         return { status: '200', message: 'delete success!!' };
     } catch (e) {

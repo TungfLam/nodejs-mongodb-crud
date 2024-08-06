@@ -77,13 +77,7 @@ const resultSchema = new database.mongoose.Schema(
                 required: false,
             },
         ],
-        tags: [
-            {
-                type: database.mongoose.Schema.Types.ObjectId,
-                ref: 'tagModel',
-                required: false,
-            },
-        ],
+        tags: [{ type: String, required: false }],
     },
     {
         collection: 'results',
