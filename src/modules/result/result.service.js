@@ -32,10 +32,10 @@ const getResultsUserTasks = async (id, limit, page, query) => {
             .select(
                 '-__v -improvement_suggestions -review_date -updated_by -deleted_by',
             )
-            .populate('user_id')
+            .populate('user_id', 'email full_name phone_number')
             .populate('reviewer_id')
             .populate('updated_by')
-            .populate('attachments')
+            .populate('attachments', 'file_name file_url')
             .populate('tags')
             .exec(),
     ]);
@@ -372,6 +372,11 @@ const deleteResultsUserTask = async (id) => {
             { is_delete: true },
             { new: true },
         );
+        const query = {
+            results: {
+                $in: [id],
+            },
+        };
         if (result_delete.attachments) {
             result_delete.attachments.map(async (attachment) => {
                 await Result.attachmentModel.findByIdAndDelete({
@@ -379,10 +384,30 @@ const deleteResultsUserTask = async (id) => {
                 });
             });
         }
+        updateAfterDeleteResultsTask(id, query);
+
+        return { status: '200', message: 'delete success!!' };
+    } catch (e) {
+        throw e;
+    }
+};
+
+/**
+ * Lấy danh sách kết quả khi được submit của mỗi user
+ * @param {string} id - Id của result cần xóa.
+ * @returns {Object} - Dữ liệu phản hồi chứa danh sách các thuộc tính.
+ * @throws {Error} - Ném ra lỗi nếu gọi API thất bại.
+ */
+const updateAfterDeleteResultsTask = async (id, query) => {
+    try {
+        // Kiểm tra data từ req.query có tồn tại không
+        if (!query) {
+            throw new Error({ message: 'không nhận được id result' });
+        }
         await Task.taskModel.updateMany(
             { results: id },
             {
-                $pull: { results: id },
+                $pull: query,
                 updated_at: new Date(),
             },
         );
